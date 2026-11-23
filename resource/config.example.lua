@@ -6,6 +6,13 @@ Config.AudioBanks = {
     -- 'DLC_WMSIRENS\\SIRENPACK_ONE',
 }
 
+-- VCF files are found automatically in the xmlFiles folder.
+-- If your host blocks that (you'll see an error in the server console), list them here instead:
+-- Config.VCFFiles = {
+--     'police.xml',
+--     'ambulance.xml',
+-- }
+
 -- Change these values to tweak the light reflections around your vehicle
 Config.EnvironmentalLights = {
     Range = 80.0, -- how far the light reaches
