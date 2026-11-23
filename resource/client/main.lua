@@ -250,7 +250,8 @@ AddEventHandler('onClientResourceStart', function(name)
             local vehicle = GetVehiclePedIsUsing(ped)
 
             -- only run if player is in an ELS enabled vehicle and can control the sirens
-            if IsELSVehicle(vehicle) and CanControlSirens(vehicle) then
+            -- (the vehicle can be deleted in the same frame, e.g. by a menu: #188)
+            if DoesEntityExist(vehicle) and IsELSVehicle(vehicle) and CanControlSirens(vehicle) then
                 -- conflicting controls
                 local controls = {
                     { 0, 58 }, -- INPUT_THROW_GRENADE

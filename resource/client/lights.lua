@@ -96,10 +96,7 @@ local function SetLightStage(vehicle, stage, toggle)
             for _, flash in ipairs(patternData) do
                 if ELSvehicle[stage] and DoesEntityExist(vehicle) then
                     for _, extra in ipairs(flash['extras']) do
-                        -- disable auto repairs
-                        SetVehicleAutoRepairDisabled(vehicle, true)
-
-                        -- turn the extra on
+                        -- turn the extra on (also disables auto repairs)
                         ToggleExtra(vehicle, extra, true)
 
                         -- save the extra as last flashed
@@ -118,10 +115,8 @@ local function SetLightStage(vehicle, stage, toggle)
                 end
 
                 -- turn off the last flashed lights
+                -- (the vehicle may have been deleted during the wait; ToggleExtra checks that)
                 for _, v in ipairs(lastFlash.extras) do
-                    -- disable auto repairs
-                    SetVehicleAutoRepairDisabled(vehicle, true)
-
                     ToggleExtra(vehicle, v, false)
                 end
 
@@ -150,7 +145,7 @@ end
 
 RegisterNetEvent('kjELS:resetExtras')
 AddEventHandler('kjELS:resetExtras', function(vehicle)
-    if not vehicle then
+    if not vehicle or not DoesEntityExist(vehicle) then
         CancelEvent()
         return
     end
@@ -166,10 +161,7 @@ AddEventHandler('kjELS:resetExtras', function(vehicle)
     for extra, info in pairs(kjxmlData[model].extras) do
         -- check if we can control this extra
         if info.enabled == true and not StaticsIncludesExtra(model, extra) then
-            -- disable auto repairs
-            SetVehicleAutoRepairDisabled(vehicle, true)
-
-            -- disable the extra
+            -- disable the extra (also disables auto repairs)
             ToggleExtra(vehicle, extra, false)
         end
     end
@@ -177,7 +169,7 @@ end)
 
 RegisterNetEvent('kjELS:resetMiscs')
 AddEventHandler('kjELS:resetMiscs', function(vehicle)
-    if not vehicle then
+    if not vehicle or not DoesEntityExist(vehicle) then
         CancelEvent()
         return
     end
