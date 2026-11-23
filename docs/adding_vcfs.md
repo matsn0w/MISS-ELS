@@ -9,4 +9,15 @@ In order to 'install' a new VCF for a vehicle, you have to perform some steps. D
 
 That's it!
 
-**Note: the script will automatically scan the `xmlFiles/` directory for VCF files. This should work on both Windows and Linux-based hosts. Please [report an issue](https://github.com/matsn0w/MISS-ELS/issues) if this somehow doesn't work for you.**
+**Note: the script will automatically scan the `xmlFiles/` directory for VCF files. This should work on both Windows and Linux-based hosts.**
+
+Some hosting providers don't allow resources to list files. If the server console says it couldn't scan the `xmlFiles` folder, list your VCFs in `config.lua` instead:
+
+```lua
+Config.VCFFiles = {
+    'police.xml',
+    'ambulance.xml',
+}
+```
+
+Please [report an issue](https://github.com/matsn0w/MISS-ELS/issues) if loading your VCFs still doesn't work.
