@@ -86,3 +86,11 @@ Test('common mistakes are reported but the VCF stays usable', function()
 
     Eq(vcf.patterns.primary[1].duration, 100, 'invalid duration falls back to 100')
 end)
+
+Test('MainHorn InterruptSiren is parsed, off by default', function()
+    local vcf = Vcf.parse(vcfXml('<SOUNDS><MainHorn AllowUse="true" InterruptSiren="true" /></SOUNDS>'))
+    Eq(vcf.sounds.mainHorn.interruptSiren, true, 'enabled')
+
+    vcf = Vcf.parse(vcfXml('<SOUNDS><MainHorn AllowUse="true" /></SOUNDS>'))
+    Eq(vcf.sounds.mainHorn.interruptSiren, false, 'default')
+end)

@@ -183,7 +183,12 @@ local function ApplyElsState(vehicle, state)
         if (state[stage] == true) ~= ELSvehicle[stage] then SetLightStage(vehicle, stage, state[stage] == true) end
     end
 
-    if (state.siren or 0) ~= ELSvehicle.siren then SetSiren(vehicle, ELSvehicle, state.siren or 0) end
+    -- a horn with InterruptSiren silences the siren while it sounds (#179); the synced siren stays on
+    local mainHorn = kjxmlData[GetCarHash(vehicle)].sounds.mainHorn
+    local siren = state.siren or 0
+    if state.horn == true and mainHorn and mainHorn.interruptSiren then siren = 0 end
+
+    if siren ~= ELSvehicle.siren then SetSiren(vehicle, ELSvehicle, siren) end
     if (state.horn == true) ~= (ELSvehicle.horn == true) then SetHorn(vehicle, ELSvehicle, state.horn == true) end
 end
 

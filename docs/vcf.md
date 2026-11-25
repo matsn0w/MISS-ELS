@@ -150,6 +150,7 @@ Options:
 | AllowUse | boolean | `true`, `false` | `false` | Whether the custom horn is enabled or not. The game's horn for the vehicle will be used (different depending on the `vehicles.meta` entry for it). |
 | AudioString | string | name hash of sound to use | `SIRENS_AIRHORN` | The name of an audio to play. Must be compatible with the [`PLAY_SOUND_FROM_ENTITY`](https://docs.fivem.net/natives/?_0xE65F427EB70AB1ED) native. |
 | SoundSet | string | name of sound bank to use | - | The name of the sound set if using WMServerSirens. |
+| InterruptSiren | boolean | `true`, `false` | `false` | Whether the horn silences the siren while it sounds, like an air horn in some countries. |
 
 **NineMode**:
 

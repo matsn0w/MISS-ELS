@@ -82,6 +82,8 @@ function Vcf.parse(xml)
                     vcf.sounds.mainHorn = {
                         allowUse = elem.attr.AllowUse == 'true',
                         audioString = elem.attr.AudioString or 'SIRENS_AIRHORN',
+                        -- the horn silences the siren while it sounds (#179)
+                        interruptSiren = elem.attr.InterruptSiren == 'true',
                         soundSet = elem.attr.SoundSet,
                     }
                 elseif elem.name == 'NineMode' then
