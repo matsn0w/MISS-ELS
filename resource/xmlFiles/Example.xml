@@ -7,6 +7,8 @@
 		<Extra02 AllowEnvLight="true" Color="blue" />
 		<Extra03 AllowEnvLight="true" Color="blue" />
 		<Extra04 AllowEnvLight="true" Color="blue" />
+		<Extra05 />
+		<Extra06 />
 		<Extra07 AllowEnvLight="true" Color="red" />
 		<Extra08 AllowEnvLight="true" Color="red" />
 		<Extra09 AllowEnvLight="true" Color="red" OffsetX="0.40" OffsetY="-0.80" OffsetZ="0.40" />
@@ -14,6 +16,7 @@
 		<Extra12 />
 		<MiscA AllowEnvLight="true" Color="amber" />
 		<MiscB AllowEnvLight="true" Color="amber" />
+		<MiscJ />
 		<MiscK />
 	</EOVERRIDE>
 
