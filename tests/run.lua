@@ -31,8 +31,10 @@ end
 dofile('resource/lib/SLAXML.lua')
 dofile('resource/shared/funcs.lua')
 dofile('resource/server/vcf.lua')
+dofile('resource/server/state.lua')
 
 dofile('tests/vcf_test.lua')
+dofile('tests/state_test.lua')
 
 print(passed .. ' passed, ' .. failed .. ' failed')
 os.exit(failed == 0 and 0 or 1)

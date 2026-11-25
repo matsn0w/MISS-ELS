@@ -191,113 +191,81 @@ AddEventHandler('kjELS:resetMiscs', function(vehicle)
     end
 end)
 
-RegisterNetEvent('kjELS:toggleLights')
-AddEventHandler('kjELS:toggleLights', function(vehicle, stage, toggle)
-    if not vehicle then
-        CancelEvent()
-        return
-    end
-
-    if kjEnabledVehicles[vehicle] == nil then AddVehicleToTable(vehicle) end
-
-    -- set the light stage
-    SetLightStage(vehicle, stage, toggle)
-end)
-
-RegisterNetEvent('kjELS:updateHorn')
-AddEventHandler('kjELS:updateHorn', function(playerid, status)
-    local vehicle = GetVehiclePedIsUsing(GetPlayerPed(GetPlayerFromServerId(playerid)))
-
-    -- the player is not in (or not near) an ELS vehicle for this client
-    if not vehicle or vehicle == 0 or not kjxmlData or not IsELSVehicle(vehicle) then
-        CancelEvent()
-        return
-    end
-
-    if kjEnabledVehicles[vehicle] == nil then AddVehicleToTable(vehicle) end
-
-    local ELSvehicle = kjEnabledVehicles[vehicle]
-
-    -- toggle the horn state (true = on, false = off)
+local function SetHorn(vehicle, ELSvehicle, status)
     ELSvehicle.horn = status
 
-    -- get the sounds from the VCF
-    local sounds = kjxmlData[GetCarHash(vehicle)].sounds
-
-    -- horn is honking
+    -- stop the horn if it is honking
     if ELSvehicle.sound_id ~= nil then
-        -- stop honking the horn
         StopSound(ELSvehicle.sound_id)
         ReleaseSoundId(ELSvehicle.sound_id)
 
         ELSvehicle.sound_id = nil
     end
 
-    -- horn is set to 'on'
     if status then
-        -- get a fresh sound id
+        local mainHorn = kjxmlData[GetCarHash(vehicle)].sounds.mainHorn
+
         ELSvehicle.sound_id = GetSoundId()
-
-        -- honk the horn
-        PlaySoundFromEntity(
-            ELSvehicle.sound_id,
-            sounds.mainHorn.audioString,
-            vehicle,
-            sounds.mainHorn.soundSet or 0,
-            0, 0
-        )
+        PlaySoundFromEntity(ELSvehicle.sound_id, mainHorn.audioString, vehicle, mainHorn.soundSet or 0, 0, 0)
     end
-end)
+end
 
--- run on kjELS:setSirenState
-RegisterNetEvent('kjELS:updateSiren')
-AddEventHandler('kjELS:updateSiren', function(playerid, status)
-    local vehicle = GetVehiclePedIsUsing(GetPlayerPed(GetPlayerFromServerId(playerid)))
-
-    -- the player is not in (or not near) an ELS vehicle for this client
-    if not vehicle or vehicle == 0 or not kjxmlData or not IsELSVehicle(vehicle) then
-        CancelEvent()
-        return
-    end
-
-    if kjEnabledVehicles[vehicle] == nil then AddVehicleToTable(vehicle) end
-
-    local ELSvehicle = kjEnabledVehicles[vehicle]
-
-    -- toggle the siren state (true = on, false = off)
+local function SetSiren(vehicle, ELSvehicle, status)
     ELSvehicle.siren = status
 
-    -- siren is on
+    -- stop the siren if it is playing
     if ELSvehicle.sound ~= nil then
-        -- stop the siren
         StopSound(ELSvehicle.sound)
         ReleaseSoundId(ELSvehicle.sound)
 
         ELSvehicle.sound = nil
     end
 
-    -- get the sounds from the VCF
-    local sounds = kjxmlData[GetCarHash(vehicle)].sounds
+    local tone = kjxmlData[GetCarHash(vehicle)].sounds['srnTone' .. status]
 
-    -- there are 4 possible siren sounds
-    local statuses = {1, 2, 3, 4}
-
-    if TableHasValue(statuses, status) then
-        -- get a fresh sound id
+    if tone then
         ELSvehicle.sound = GetSoundId()
-
-        -- play the siren sound
-        PlaySoundFromEntity(
-            ELSvehicle.sound,
-            sounds['srnTone' .. status].audioString,
-            vehicle,
-            sounds['srnTone' .. status].soundSet,
-            0, 0
-        )
+        PlaySoundFromEntity(ELSvehicle.sound, tone.audioString, vehicle, tone.soundSet, 0, 0)
     end
 
     -- mute the native siren
     SetVehicleHasMutedSirens(vehicle, true)
+end
+
+--- Bring a vehicle in line with its synced 'els' state (see server/state.lua), changing only what differs
+local function ApplyElsState(vehicle, state)
+    if not kjxmlData or type(state) ~= 'table' or not DoesEntityExist(vehicle) or not IsELSVehicle(vehicle) then return end
+
+    if kjEnabledVehicles[vehicle] == nil then AddVehicleToTable(vehicle) end
+
+    local ELSvehicle = kjEnabledVehicles[vehicle]
+
+    for _, stage in ipairs({ 'primary', 'secondary', 'warning' }) do
+        if (state[stage] == true) ~= ELSvehicle[stage] then SetLightStage(vehicle, stage, state[stage] == true) end
+    end
+
+    if (state.siren or 0) ~= ELSvehicle.siren then SetSiren(vehicle, ELSvehicle, state.siren or 0) end
+    if (state.horn == true) ~= (ELSvehicle.horn == true) then SetHorn(vehicle, ELSvehicle, state.horn == true) end
+end
+
+-- instant updates for vehicles this client can see
+AddStateBagChangeHandler('els', nil, function(bagName, _, value)
+    local vehicle = GetEntityFromStateBagName(bagName)
+
+    if vehicle ~= 0 then ApplyElsState(vehicle, value) end
+end)
+
+-- vehicles that come into range already have a state: pick it up
+Citizen.CreateThread(function()
+    while true do
+        Citizen.Wait(500)
+
+        for _, vehicle in ipairs(GetGamePool('CVehicle')) do
+            local state = Entity(vehicle).state.els
+
+            if state then ApplyElsState(vehicle, state) end
+        end
+    end
 end)
 
 RegisterNetEvent('kjELS:updateIndicators')

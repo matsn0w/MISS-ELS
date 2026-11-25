@@ -163,6 +163,7 @@ AddEventHandler('onResourceStart', function(name)
             if vcf then
                 -- the model name is the file name without .xml
                 kjxmlData[file:sub(1, -5)] = vcf
+                VcfByModel[GetHashKey(file:sub(1, -5))] = vcf
                 print('Parsed VCF for: ' .. file)
             else
                 print('^1[MISS-ELS] VCF file ' .. file .. ' could not be parsed and is skipped^7')

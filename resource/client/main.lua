@@ -42,6 +42,16 @@ if Config.Indicators then
     end)
 end
 
+--- The vehicle's synced ELS state (written by the server, see server/state.lua)
+local function ElsStateOf(vehicle)
+    return Entity(vehicle).state.els or {}
+end
+
+--- Ask the server to change the vehicle's ELS state; it validates and syncs it to everyone
+local function RequestElsState(vehicle, changes)
+    TriggerServerEvent('MISS-ELS:requestState', VehToNet(vehicle), changes)
+end
+
 local function HandleHorn()
     local ped = PlayerPedId()
     local vehicle = GetVehiclePedIsUsing(ped)
@@ -60,38 +70,24 @@ local function HandleHorn()
 
     -- INPUT_VEH_HORN (E or L3) is pressed
     if IsDisabledControlJustPressed(0, 86) then
-        TriggerServerEvent('kjELS:toggleHorn', true)
+        RequestElsState(vehicle, { horn = true })
     end
 
     -- INPUT_VEH_HORN (E or L3) is released
     if IsDisabledControlJustReleased(0, 86) then
-        TriggerServerEvent('kjELS:toggleHorn', false)
-    end
-end
-
-local function ToggleLights(vehicle, stage, toggle)
-    local ELSvehicle = kjEnabledVehicles[vehicle]
-
-    -- turn light stage on or off based on the toggle
-    TriggerEvent('kjELS:toggleLights', vehicle, stage, toggle)
-
-    -- turn siren off when all lights are off
-    if not ELSvehicle.primary and not ELSvehicle.secondary and not ELSvehicle.warning then
-        TriggerServerEvent('kjELS:setSirenState', 0)
+        RequestElsState(vehicle, { horn = false })
     end
 end
 
 local function HandleLightStage(stage)
     local ped = PlayerPedId()
     local vehicle = GetVehiclePedIsUsing(ped)
+    local turnOn = not ElsStateOf(vehicle)[stage]
 
-    if kjEnabledVehicles[vehicle][stage] then
-        -- turn lights off
-        ToggleLights(vehicle, stage, false)
-    else
-        -- turn lights on
-        ToggleLights(vehicle, stage, true)
+    -- the server turns the siren off when the last stage goes off
+    RequestElsState(vehicle, { [stage] = turnOn })
 
+    if turnOn then
         if stage == 'primary' and kjxmlData[GetCarHash(vehicle)].sounds.nineMode then
             -- play 999 sound effect
             SendNUIMessage({ transactionType = 'playSound', transactionFile = '999mode', transactionVolume = 1.0 })
@@ -104,24 +100,26 @@ local function HandleSiren(siren)
     local vehicle = GetVehiclePedIsUsing(ped)
 
     -- siren only works in the primary light stage
-    if not kjEnabledVehicles[vehicle].primary and not Config.SirenAlwaysAllowed then return end
+    local state = ElsStateOf(vehicle)
+    if not state.primary and not Config.SirenAlwaysAllowed then return end
 
-    local currentSiren = kjEnabledVehicles[vehicle].siren
+    local currentSiren = state.siren or 0
     local sirenOn = currentSiren ~= 0
 
     if (not sirenOn) or (sirenOn and siren and siren ~= currentSiren) then
         -- siren only works if it is enabled
-        if siren and not kjxmlData[GetCarHash(vehicle)].sounds['srnTone' .. siren].allowUse then return end
+        local tone = kjxmlData[GetCarHash(vehicle)].sounds['srnTone' .. (siren or 1)]
+        if not tone or not tone.allowUse then return end
 
         -- turn the (next) siren on
-        TriggerServerEvent('kjELS:setSirenState', siren or 1)
+        RequestElsState(vehicle, { siren = siren or 1 })
 
         if Config.HornBlip then
             SoundVehicleHornThisFrame(vehicle)
         end
     elseif sirenOn or not siren then
         -- turn the siren off
-        TriggerServerEvent('kjELS:setSirenState', 0)
+        RequestElsState(vehicle, { siren = 0 })
 
         if Config.HornBlip then
             Wait(100)
@@ -141,7 +139,7 @@ local function NextSiren()
     local vehicle = GetVehiclePedIsUsing(ped)
 
     -- get the next siren
-    local next = kjEnabledVehicles[vehicle].siren + 1
+    local next = (ElsStateOf(vehicle).siren or 0) + 1
 
     -- keep track of the amount of tries, there are a total of 4 sirens
     local max = 4
