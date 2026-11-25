@@ -7,3 +7,4 @@ Here you'll find instructions for configuring this resource and individual VCF f
 - [Using miscs as light sources](miscs.md)
 - [Adding VCF files](adding_vcfs.md)
 - [Frequently Asked Questions](faq.md)
+- [API for other resources](api.md)

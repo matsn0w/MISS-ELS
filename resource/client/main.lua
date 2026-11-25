@@ -291,3 +291,8 @@ AddEventHandler('onClientResourceStart', function(name)
         end
     end)
 end)
+
+-- for HUDs and other resources (#28); changes go through the server's checks like a key press
+-- exports['MISS-ELS']:GetVehicleState(vehicle) and exports['MISS-ELS']:RequestVehicleState(vehicle, { primary = 'toggle' })
+exports('GetVehicleState', function(vehicle) return Entity(vehicle).state.els end)
+exports('RequestVehicleState', RequestElsState)
