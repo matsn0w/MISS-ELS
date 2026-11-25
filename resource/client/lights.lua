@@ -33,32 +33,33 @@ local function WarningBeepVolume(vehicle)
     return math.max(0, maxVolume * (1 - distance / range))
 end
 
-local function SetLightStage(vehicle, stage, toggle)
+--- @param number integer the light stage (1-10)
+local function SetLightStage(vehicle, number, toggle)
     local ELSvehicle = kjEnabledVehicles[vehicle]
-    local VCFdata = kjxmlData[GetCarHash(vehicle)]
-
-    -- get the pattern data
-    local patternData = VCFdata.patterns[ConvertStageToPattern(stage)]
+    local vcf = kjxmlData[GetCarHash(vehicle)]
+    local stage = vcf.stages[number]
 
     -- reset all extras and miscs
     TriggerEvent('kjELS:resetExtras', vehicle)
     TriggerEvent('kjELS:resetMiscs', vehicle)
 
     -- set the light state
-    ELSvehicle[stage] = toggle
+    ELSvehicle.stages[number] = toggle
 
-    if patternData.isEmergency then
-        -- toggle the native siren ('emergency mode')
-        SetVehicleSiren(vehicle, toggle)
+    -- the native siren ('emergency mode') is on while any emergency stage is on
+    local emergency = false
+    for n, s in ipairs(vcf.stages) do
+        emergency = emergency or (ELSvehicle.stages[n] and s.isEmergency)
     end
+    SetVehicleSiren(vehicle, emergency)
 
-    if patternData.enableWarningBeep and toggle then
+    if stage.enableWarningBeep and toggle then
         -- a new token stops a loop from an earlier activation, so quick toggles never beep twice
         local token = {}
-        ELSvehicle['beep_' .. stage] = token
+        ELSvehicle.beep[number] = token
 
         Citizen.CreateThread(function()
-            while ELSvehicle[stage] and ELSvehicle['beep_' .. stage] == token and DoesEntityExist(vehicle) do
+            while ELSvehicle.stages[number] and ELSvehicle.beep[number] == token and DoesEntityExist(vehicle) do
                 local volume = WarningBeepVolume(vehicle)
 
                 if volume > 0 then
@@ -179,8 +180,10 @@ local function ApplyElsState(vehicle, state)
 
     ELSvehicle.highBeamEnabled = state.highBeam ~= false
 
-    for _, stage in ipairs({ 'primary', 'secondary', 'warning' }) do
-        if (state[stage] == true) ~= ELSvehicle[stage] then SetLightStage(vehicle, stage, state[stage] == true) end
+    local stages = type(state.stages) == 'table' and state.stages or {}
+    for number in ipairs(kjxmlData[GetCarHash(vehicle)].stages) do
+        local on = stages[number] == true
+        if on ~= (ELSvehicle.stages[number] == true) then SetLightStage(vehicle, number, on) end
     end
 
     -- a horn with InterruptSiren silences the siren while it sounds (#179); the synced siren stays on
@@ -268,11 +271,11 @@ Citizen.CreateThread(function()
             local data = DoesEntityExist(vehicle) and kjxmlData[GetCarHash(vehicle)]
 
             if data then
-                if ELSvehicle.primary or ELSvehicle.secondary or ELSvehicle.warning then
+                if Pattern.anyStageOn(ELSvehicle.stages) then
                     -- keep the engine on whilst the lights are activated
                     SetVehicleEngineOn(vehicle, true, true, false)
 
-                    local extras, miscs = Pattern.litLights(data, ELSvehicle, now)
+                    local extras, miscs = Pattern.litLights(data, ELSvehicle.stages, now)
                     data.patternLights = data.patternLights or Pattern.lightsUsed(data)
 
                     -- compare with what is actually on: the owner's synced extras arrive a few frames
@@ -293,7 +296,7 @@ Citizen.CreateThread(function()
 
                 -- nil: not flashing (no stage with FlashHighBeam, or turned off in the menu)
                 local highBeam = nil
-                if ELSvehicle.highBeamEnabled then highBeam = Pattern.highBeamOn(data, ELSvehicle, now) end
+                if ELSvehicle.highBeamEnabled then highBeam = Pattern.highBeamOn(data, ELSvehicle.stages, now) end
 
                 if highBeam ~= nil then
                     if not ELSvehicle.highBeam then
@@ -367,9 +370,7 @@ Citizen.CreateThread(function()
         for vehicle, ELSvehicle in pairs(kjEnabledVehicles) do
             if not DoesEntityExist(vehicle) then
                 -- stop all light stage threads
-                ELSvehicle.primary = false
-                ELSvehicle.secondary = false
-                ELSvehicle.warning = false
+                ELSvehicle.stages = {}
 
                 -- stop the siren and horn
                 ReleaseSound(ELSvehicle.sound)

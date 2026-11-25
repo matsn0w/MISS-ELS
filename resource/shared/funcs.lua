@@ -56,9 +56,8 @@ end
 
 function AddVehicleToTable(vehicle)
     kjEnabledVehicles[vehicle] = {
-        primary = false,
-        secondary = false,
-        warning = false,
+        stages = {}, -- light stage number -> on
+        beep = {}, -- warning beep loop per stage
         siren = 0,
         sound = nil,
         highBeamEnabled = true,
@@ -79,16 +78,6 @@ function CanControlSirens(vehicle)
 
     -- either true or false based on the config value
     return Config.AllowPassengers
-end
-
-function ConvertStageToPattern(stage)
-    local pattern = stage
-
-    -- yeah...
-    if stage == 'secondary' then pattern = 'rearreds'
-    elseif stage == 'warning' then pattern = 'secondary' end
-
-    return pattern
 end
 
 function CanControlELS()

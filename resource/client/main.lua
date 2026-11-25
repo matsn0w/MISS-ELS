@@ -79,16 +79,17 @@ local function HandleHorn()
     end
 end
 
-local function HandleLightStage(stage)
+--- @param number integer the light stage (1-10)
+local function HandleLightStage(number)
     local ped = PlayerPedId()
     local vehicle = GetVehiclePedIsUsing(ped)
     -- the server flips the current value, so quick presses don't act on a state that hasn't synced back yet;
-    -- it also turns the siren off when the last stage goes off
-    RequestElsState(vehicle, { [stage] = 'toggle' })
+    -- it also ignores stages the vehicle doesn't have and turns the siren off when the last stage goes off
+    RequestElsState(vehicle, { stages = { [number] = 'toggle' } })
 
     -- only for the sound effect, so a stale value is harmless
-    if not ElsStateOf(vehicle)[stage] then
-        if stage == 'primary' and kjxmlData[GetCarHash(vehicle)].sounds.nineMode then
+    if not (ElsStateOf(vehicle).stages or {})[number] then
+        if number == 1 and kjxmlData[GetCarHash(vehicle)].sounds.nineMode then
             -- play 999 sound effect
             SendNUIMessage({ transactionType = 'playSound', transactionFile = '999mode', transactionVolume = 1.0 })
         end
@@ -99,9 +100,9 @@ local function HandleSiren(siren)
     local ped = PlayerPedId()
     local vehicle = GetVehiclePedIsUsing(ped)
 
-    -- siren only works in the primary light stage
+    -- siren only works with light stage 1 (primary)
     local state = ElsStateOf(vehicle)
-    if not state.primary and not Config.SirenAlwaysAllowed then return end
+    if not (state.stages or {})[1] and not Config.SirenAlwaysAllowed then return end
 
     local currentSiren = state.siren or 0
     local sirenOn = currentSiren ~= 0
@@ -166,23 +167,16 @@ local function NextSiren()
     HandleSiren(next)
 end
 
-RegisterCommand('MISS-ELS:toggle-stage-primary', function ()
-    if not CanControlELS() then return end
+-- stages 1-3 keep their 2.x command names, so players' own key bindings keep working
+local STAGE_COMMANDS = { 'primary', 'secondary', 'warning', '4', '5', '6', '7', '8', '9', '10' }
 
-    HandleLightStage('primary')
-end)
+for number, name in ipairs(STAGE_COMMANDS) do
+    RegisterCommand('MISS-ELS:toggle-stage-' .. name, function ()
+        if not CanControlELS() then return end
 
-RegisterCommand('MISS-ELS:toggle-stage-secondary', function ()
-    if not CanControlELS() then return end
-
-    HandleLightStage('secondary')
-end)
-
-RegisterCommand('MISS-ELS:toggle-stage-warning', function ()
-    if not CanControlELS() then return end
-
-    HandleLightStage('warning')
-end)
+        HandleLightStage(number)
+    end)
+end
 
 RegisterCommand('MISS-ELS:toggle-siren', function ()
     if not CanControlELS() then return end
@@ -280,7 +274,7 @@ AddEventHandler('onClientResourceStart', function(name)
 
                 if not IsUsingKeyboard(0) then
                     -- on controller
-                    if IsDisabledControlJustReleased(1, 85 --[[ DPAD_LEFT ]]) then HandleLightStage('primary')
+                    if IsDisabledControlJustReleased(1, 85 --[[ DPAD_LEFT ]]) then HandleLightStage(1)
                     elseif IsDisabledControlJustReleased(1, 170 --[[ B ]]) then NextSiren()
                     elseif IsDisabledControlJustReleased(1, 173 --[[ DPAD_DOWN ]]) then HandleSiren()
                     end
@@ -293,6 +287,6 @@ AddEventHandler('onClientResourceStart', function(name)
 end)
 
 -- for HUDs and other resources (#28); changes go through the server's checks like a key press
--- exports['MISS-ELS']:GetVehicleState(vehicle) and exports['MISS-ELS']:RequestVehicleState(vehicle, { primary = 'toggle' })
+-- exports['MISS-ELS']:GetVehicleState(vehicle) and exports['MISS-ELS']:RequestVehicleState(vehicle, { stages = { [1] = 'toggle' } })
 exports('GetVehicleState', function(vehicle) return Entity(vehicle).state.els end)
 exports('RequestVehicleState', RequestElsState)

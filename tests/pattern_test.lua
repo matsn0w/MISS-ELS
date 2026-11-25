@@ -29,30 +29,38 @@ Test('flashAt handles empty patterns', function()
     Eq(Pattern.flashAt(pattern({ 0 }), 1234), nil, 'zero duration')
 end)
 
-Test('litLights combines all active stages', function()
+local function stage(patterns, extras, miscs)
+    return { patterns = patterns, extras = extras or {}, miscs = miscs or {} }
+end
+
+Test('litLights combines all active stages and their patterns', function()
     local vcf = {
-        patterns = {
-            primary = pattern({ 100, { 1, 2 }, { 0 } }, { 100, { 3 } }),
-            rearreds = pattern({ 200, { 3, 5 } }),
-            secondary = pattern({ 200, { 7 } }),
+        stages = {
+            stage({ pattern({ 100, { 1, 2 }, { 0 } }, { 100, { 3 } }) }),
+            stage({ pattern({ 200, { 3, 5 } }), pattern({ 50, { 8 } }, { 50, {} }) }),
+            stage({ pattern({ 200, { 7 } }) }, { 11 }, { 4 }),
         },
     }
 
-    local extras, miscs = Pattern.litLights(vcf, { primary = true }, 0)
-    Eq(keys(extras), '1,2', 'primary only, first flash')
+    local extras, miscs = Pattern.litLights(vcf, { true }, 0)
+    Eq(keys(extras), '1,2', 'stage 1 only, first flash')
     Eq(keys(miscs), '0', 'misc')
 
-    extras = Pattern.litLights(vcf, { primary = true, secondary = true }, 150)
-    Eq(keys(extras), '3,5', 'primary second flash + secondary stage (rearreds pattern)')
+    extras = Pattern.litLights(vcf, { true, true }, 150)
+    Eq(keys(extras), '3,5', 'stage 1 second flash + stage 2, second pattern between flashes')
 
-    extras = Pattern.litLights(vcf, { warning = true }, 0)
-    Eq(keys(extras), '7', 'warning stage uses the secondary pattern')
+    extras = Pattern.litLights(vcf, { false, true }, 20)
+    Eq(keys(extras), '3,5,8', 'both patterns of stage 2 at once (#103)')
+
+    extras, miscs = Pattern.litLights(vcf, { [3] = true }, 0)
+    Eq(keys(extras), '7,11', 'stage 3 pattern + its steady extra (#107)')
+    Eq(keys(miscs), '4', 'steady misc')
 
     extras = Pattern.litLights(vcf, {}, 0)
     Eq(keys(extras), '', 'nothing on')
 end)
 
-Test('lightsUsed lists every light any pattern switches', function()
+Test('lightsUsed lists every light any stage switches', function()
     local vcf = Vcf.parse(ReadFile('resource/xmlFiles/Example.xml'))
     local used = Pattern.lightsUsed(vcf)
 
@@ -63,10 +71,16 @@ end)
 Test('highBeamOn flashes only while a stage with FlashHighBeam is active', function()
     local vcf = Vcf.parse(ReadFile('resource/xmlFiles/Example.xml'))
 
-    -- Example.xml: PRIMARY has FlashHighBeam="true", the others don't
-    Eq(Pattern.highBeamOn(vcf, { primary = true }, 100), true, 'first half second')
-    Eq(Pattern.highBeamOn(vcf, { primary = true }, 600), false, 'second half second')
-    Eq(Pattern.highBeamOn(vcf, { primary = true }, 1100), true, 'next cycle')
-    Eq(Pattern.highBeamOn(vcf, { secondary = true, warning = true }, 100), nil, 'stages without high beams')
+    -- Example.xml: PRIMARY (stage 1) has FlashHighBeam="true", the others don't
+    Eq(Pattern.highBeamOn(vcf, { true }, 100), true, 'first half second')
+    Eq(Pattern.highBeamOn(vcf, { true }, 600), false, 'second half second')
+    Eq(Pattern.highBeamOn(vcf, { true }, 1100), true, 'next cycle')
+    Eq(Pattern.highBeamOn(vcf, { false, true, true }, 100), nil, 'stages without high beams')
     Eq(Pattern.highBeamOn(vcf, {}, 100), nil, 'nothing on')
+end)
+
+Test('anyStageOn', function()
+    Eq(Pattern.anyStageOn({ false, false }), false, 'all off')
+    Eq(Pattern.anyStageOn({ false, true }), true, 'one on')
+    Eq(Pattern.anyStageOn(nil), false, 'no state')
 end)

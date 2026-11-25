@@ -218,3 +218,43 @@ Pattern example:
     </REARREDS>
 </PATTERN>
 ```
+
+The `PATTERN` format keeps working in v3: `PRIMARY` is light stage 1 (Q), `REARREDS` stage 2 (K) and `SECONDARY` stage 3 (L). For more stages, patterns that run at the same time or lights that stay on, use `STAGES` instead.
+
+## Light stages: `STAGES` (v3)
+
+`STAGES` replaces `PATTERN` (use one of the two, not both). You can define up to 10 light stages. Stages 1 to 3 are on Q, K and L; players can bind stages 4 to 10 themselves in the FiveM key settings (*Settings → Key Bindings → FiveM*). The siren works with stage 1 on, as with the primary lights in `PATTERN`.
+
+Each `Stage` has:
+
+- `Number` (required): 1 to 10.
+- `Name`: shown in messages, e.g. `Front`.
+- `IsEmergency`, `FlashHighBeam` and `EnableWarningBeep`: the same options as in `PATTERN` (see above).
+- `Extras` and `Miscs`: lights that stay on for as long as the stage is on, e.g. a control panel or a takedown light.
+- One or more `Pattern` elements with `Flash` elements, as in `PATTERN`. All patterns of a stage run at the same time, so the front and the rear of a vehicle can each have their own rhythm, on one key.
+
+```xml
+<STAGES>
+    <Stage Number="1" Name="Front" FlashHighBeam="true" Extras="11">
+        <Pattern>
+            <Flash Duration="100" Extras="1" />
+            <Flash Duration="100" />
+            <Flash Duration="100" Extras="4" />
+            <Flash Duration="100" />
+        </Pattern>
+        <Pattern>
+            <Flash Duration="700" Extras="5" />
+            <Flash Duration="700" Extras="6" />
+        </Pattern>
+    </Stage>
+
+    <Stage Number="2" Name="Rear reds" IsEmergency="false" EnableWarningBeep="true">
+        <Pattern>
+            <Flash Duration="1000" Extras="7" />
+            <Flash Duration="1000" Extras="8" />
+        </Pattern>
+    </Stage>
+
+    <Stage Number="4" Name="Scene lights" IsEmergency="false" Extras="9,10" />
+</STAGES>
+```

@@ -11,6 +11,11 @@ RegisterKeyMapping('MISS-ELS:toggle-stage-primary', 'Toggle primary lights', 'KE
 RegisterKeyMapping('MISS-ELS:toggle-stage-secondary', 'Toggle secondary lights', 'KEYBOARD', 'K')
 RegisterKeyMapping('MISS-ELS:toggle-stage-warning', 'Toggle warning lights', 'KEYBOARD', 'L')
 
+-- extra light stages for VCFs that define them; no default key, players bind them in the FiveM settings (#202)
+for number = 4, 10 do
+    RegisterKeyMapping('MISS-ELS:toggle-stage-' .. number, 'Toggle light stage ' .. number, 'KEYBOARD', '')
+end
+
 -- sirens
 RegisterKeyMapping('MISS-ELS:toggle-siren', 'Toggle sirens', 'KEYBOARD', 'LMENU') -- LEFT ALT
 RegisterKeyMapping('MISS-ELS:toggle-siren-next', 'Toggle next siren', 'KEYBOARD', 'R')

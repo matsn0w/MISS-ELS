@@ -2,7 +2,12 @@
 --- Depends on the SLAXML global (lib/SLAXML.lua) and ConvertMiscNameToId (shared/funcs.lua).
 Vcf = {}
 
-local PATTERN_TYPES = { PRIMARY = 'primary', SECONDARY = 'secondary', REARREDS = 'rearreds' }
+Vcf.MAX_STAGES = 10
+
+-- the 2.x <PATTERN> format: which light stage each pattern drives, unchanged so old VCFs keep their keys
+-- (Q = primary, K = rearreds, L = secondary)
+local LEGACY_STAGES = { PRIMARY = 1, REARREDS = 2, SECONDARY = 3 }
+local LEGACY_NAMES = { 'Primary', 'Secondary', 'Warning' }
 
 local function light(attr)
     local envLight = attr.AllowEnvLight == 'true'
@@ -46,12 +51,70 @@ function Vcf.parse(xml)
     end
 
     local vcf = {
-        patterns = { primary = {}, secondary = {}, rearreds = {} },
+        stages = {},
         extras = {},
         miscs = {},
         statics = { extras = {}, miscs = {} },
         sounds = { nineMode = false },
     }
+
+    --- Extras="1,2" and Miscs="a,b" attributes
+    local function parseLights(attr, where)
+        local extras, miscs = {}, {}
+
+        for extra in (attr.Extras or ''):gmatch('%d+') do
+            extras[#extras + 1] = tonumber(extra)
+        end
+
+        for misc in (attr.Miscs or ''):gmatch('%a+') do
+            local id = ConvertMiscNameToId(misc)
+
+            if id then
+                miscs[#miscs + 1] = id
+            else
+                problem(where .. ': unknown misc "' .. misc .. '"')
+            end
+        end
+
+        return extras, miscs
+    end
+
+    --- The <Flash> children of an element (also the older FlashXX tags)
+    local function parseFlashes(elem, where)
+        local pattern = {}
+
+        for _, flashElem in ipairs(elem.el) do
+            if flashElem.name:upper():sub(1, 5) == 'FLASH' then
+                local flashWhere = where .. ' flash ' .. (#pattern + 1)
+                local duration = tonumber(flashElem.attr.Duration or '100')
+
+                if not duration or duration <= 0 then
+                    problem(flashWhere .. ': invalid Duration "' .. tostring(flashElem.attr.Duration) .. '"')
+                    duration = 100
+                end
+
+                local extras, miscs = parseLights(flashElem.attr, flashWhere)
+                pattern[#pattern + 1] = { duration = duration, extras = extras, miscs = miscs }
+            end
+        end
+
+        return pattern
+    end
+
+    local function newStage(attr, name)
+        return {
+            name = name,
+            isEmergency = attr.IsEmergency ~= 'false',
+            flashHighBeam = attr.FlashHighBeam == 'true',
+            enableWarningBeep = attr.EnableWarningBeep == 'true',
+            -- lights that stay on while the stage is active (#107)
+            extras = {},
+            miscs = {},
+            patterns = {},
+        }
+    end
+
+    local hasLegacy, hasStages = false, false
 
     for _, section in ipairs(doc.root.el) do
         if section.name == 'EOVERRIDE' then
@@ -99,66 +162,83 @@ function Vcf.parse(xml)
                 end
             end
         elseif section.name == 'PATTERN' then
+            hasLegacy = true
+            -- 2.x format: one pattern per stage
             for _, elem in ipairs(section.el) do
-                local type = PATTERN_TYPES[elem.name:upper()]
+                local number = LEGACY_STAGES[elem.name:upper()]
 
-                if not type then
+                if not number then
                     problem('PATTERN: unknown pattern <' .. elem.name .. '>')
                 else
-                    local pattern = vcf.patterns[type]
+                    local stage = newStage(elem.attr, LEGACY_NAMES[number])
+                    stage.patterns[1] = parseFlashes(elem, stage.name)
+                    vcf.stages[number] = stage
+                end
+            end
+        elseif section.name == 'STAGES' then
+            hasStages = true
+            -- 3.x format: up to 10 stages, each with any number of patterns running at once
+            for _, elem in ipairs(section.el) do
+                local number = tonumber(elem.attr.Number)
 
-                    pattern.isEmergency = elem.attr.IsEmergency ~= 'false'
-                    pattern.flashHighBeam = elem.attr.FlashHighBeam == 'true'
-                    pattern.enableWarningBeep = elem.attr.EnableWarningBeep == 'true'
+                if elem.name ~= 'Stage' then
+                    problem('STAGES: unknown element <' .. elem.name .. '>')
+                elseif not number or number % 1 ~= 0 or number < 1 or number > Vcf.MAX_STAGES then
+                    problem('STAGES: Number must be 1 to ' .. Vcf.MAX_STAGES .. ', got "' .. tostring(elem.attr.Number) .. '"')
+                elseif vcf.stages[number] then
+                    problem('STAGES: stage ' .. number .. ' is defined twice')
+                else
+                    local stage = newStage(elem.attr, elem.attr.Name or ('Stage ' .. number))
+                    stage.extras, stage.miscs = parseLights(elem.attr, stage.name)
 
-                    -- Flash and the older FlashXX tags
-                    for _, flashElem in ipairs(elem.el) do
-                        if flashElem.name:upper():sub(1, 5) == 'FLASH' then
-                            local where = type .. ' flash ' .. (#pattern + 1)
-                            local duration = tonumber(flashElem.attr.Duration or '100')
-
-                            if not duration or duration <= 0 then
-                                problem(where .. ': invalid Duration "' .. tostring(flashElem.attr.Duration) .. '"')
-                                duration = 100
-                            end
-
-                            local flash = { duration = duration, extras = {}, miscs = {} }
-
-                            for extra in (flashElem.attr.Extras or ''):gmatch('%d+') do
-                                flash.extras[#flash.extras + 1] = tonumber(extra)
-                            end
-
-                            for misc in (flashElem.attr.Miscs or ''):gmatch('%a+') do
-                                local id = ConvertMiscNameToId(misc)
-
-                                if id then
-                                    flash.miscs[#flash.miscs + 1] = id
-                                else
-                                    problem(where .. ': unknown misc "' .. misc .. '"')
-                                end
-                            end
-
-                            pattern[#pattern + 1] = flash
+                    for _, patternElem in ipairs(elem.el) do
+                        if patternElem.name == 'Pattern' then
+                            stage.patterns[#stage.patterns + 1] =
+                                parseFlashes(patternElem, stage.name .. ' pattern ' .. (#stage.patterns + 1))
+                        else
+                            problem(stage.name .. ': unknown element <' .. patternElem.name .. '>')
                         end
                     end
+
+                    vcf.stages[number] = stage
                 end
             end
         end
     end
 
-    -- the most common mistake: flashing a light that EOVERRIDE doesn't declare, so it never lights up
-    for type, pattern in pairs(vcf.patterns) do
-        for i, flash in ipairs(pattern) do
-            for _, extra in ipairs(flash.extras) do
-                if not vcf.extras[extra] then
-                    problem(type .. ' flash ' .. i .. ': Extra' .. extra .. ' is not declared in EOVERRIDE, so it is not reset when the lights change')
-                end
-            end
+    if hasLegacy and hasStages then
+        problem('use either <PATTERN> or <STAGES>, not both')
+    end
 
-            for _, misc in ipairs(flash.miscs) do
-                if not vcf.miscs[misc] then
-                    problem(type .. ' flash ' .. i .. ': Misc' .. ConvertMiscIdToName(misc):upper() .. ' is not declared in EOVERRIDE, so it is not reset when the lights change')
-                end
+    -- fill gaps (e.g. only stage 1 and 3), so the stages are a plain list
+    local count = 0
+    for number in pairs(vcf.stages) do count = math.max(count, number) end
+    for number = 1, count do
+        vcf.stages[number] = vcf.stages[number] or newStage({}, 'Stage ' .. number)
+    end
+
+    -- the most common mistake: a light that EOVERRIDE doesn't declare, so it is not reset when the lights change
+    local function checkDeclared(extras, miscs, where)
+        for _, extra in ipairs(extras) do
+            if not vcf.extras[extra] then
+                problem(where .. ': Extra' .. extra .. ' is not declared in EOVERRIDE, so it is not reset when the lights change')
+            end
+        end
+
+        for _, misc in ipairs(miscs) do
+            if not vcf.miscs[misc] then
+                problem(where .. ': Misc' .. ConvertMiscIdToName(misc):upper() .. ' is not declared in EOVERRIDE, so it is not reset when the lights change')
+            end
+        end
+    end
+
+    for _, stage in ipairs(vcf.stages) do
+        checkDeclared(stage.extras, stage.miscs, stage.name)
+
+        for p, pattern in ipairs(stage.patterns) do
+            for i, flash in ipairs(pattern) do
+                local where = stage.name .. (#stage.patterns > 1 and (' pattern ' .. p) or '') .. ' flash ' .. i
+                checkDeclared(flash.extras, flash.miscs, where)
             end
         end
     end
