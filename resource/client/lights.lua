@@ -83,56 +83,8 @@ local function SetLightStage(vehicle, stage, toggle)
         end)
     end
 
-    Citizen.CreateThread(function()
-        while ELSvehicle[stage] and DoesEntityExist(vehicle) do
-            -- keep the engine on whilst the lights are activated
-            SetVehicleEngineOn(vehicle, true, true, false)
-
-            local lastFlash = {
-                extras = {},
-                miscs = {},
-            }
-
-            for _, flash in ipairs(patternData) do
-                if ELSvehicle[stage] and DoesEntityExist(vehicle) then
-                    for _, extra in ipairs(flash['extras']) do
-                        -- turn the extra on (also disables auto repairs)
-                        ToggleExtra(vehicle, extra, true)
-
-                        -- save the extra as last flashed
-                        table.insert(lastFlash.extras, extra)
-                    end
-
-                    for _, misc in ipairs(flash['miscs']) do
-                        -- turn the misc on
-                        ToggleMisc(vehicle, misc, true)
-
-                        -- save the misc as last flashed
-                        table.insert(lastFlash.miscs, misc)
-                    end
-
-                    Citizen.Wait(flash.duration)
-                end
-
-                -- turn off the last flashed lights
-                -- (the vehicle may have been deleted during the wait; ToggleExtra checks that)
-                for _, v in ipairs(lastFlash.extras) do
-                    ToggleExtra(vehicle, v, false)
-                end
-
-                for _, v in ipairs(lastFlash.miscs) do
-                    ToggleMisc(vehicle, v, false)
-                end
-
-                lastFlash.extras = {}
-                lastFlash.miscs = {}
-            end
-
-            Citizen.Wait(0)
-        end
-
-        Wait(0)
-    end)
+    -- the reset above turned all lights off; the render loop lights the active patterns again
+    ELSvehicle.litExtras, ELSvehicle.litMiscs = {}, {}
 end
 
 local function StaticsIncludesExtra(model, extra)
@@ -317,10 +269,37 @@ Citizen.CreateThread(function()
         -- wait for VCF data to load
         while not kjxmlData do Citizen.Wait(0) end
 
-        for vehicle, _ in pairs(kjEnabledVehicles) do
+        -- synced across all clients, so everyone sees the same flash (#41)
+        local now = GetNetworkTimeAccurate()
+
+        for vehicle, ELSvehicle in pairs(kjEnabledVehicles) do
             local data = DoesEntityExist(vehicle) and kjxmlData[GetCarHash(vehicle)]
 
             if data then
+                if ELSvehicle.primary or ELSvehicle.secondary or ELSvehicle.warning then
+                    -- keep the engine on whilst the lights are activated
+                    SetVehicleEngineOn(vehicle, true, true, false)
+                end
+
+                -- switch only the lights whose state changed since the last frame
+                local extras, miscs = Pattern.litLights(data, ELSvehicle, now)
+                local litExtras, litMiscs = ELSvehicle.litExtras or {}, ELSvehicle.litMiscs or {}
+
+                for extra in pairs(litExtras) do
+                    if not extras[extra] then ToggleExtra(vehicle, extra, false) end
+                end
+                for extra in pairs(extras) do
+                    if not litExtras[extra] then ToggleExtra(vehicle, extra, true) end
+                end
+                for misc in pairs(litMiscs) do
+                    if not miscs[misc] then ToggleMisc(vehicle, misc, false) end
+                end
+                for misc in pairs(miscs) do
+                    if not litMiscs[misc] then ToggleMisc(vehicle, misc, true) end
+                end
+
+                ELSvehicle.litExtras, ELSvehicle.litMiscs = extras, miscs
+
                 for extra, info in pairs(data.extras) do
                     if IsVehicleExtraTurnedOn(vehicle, extra) and info.env_light then
                         local offset = vector3(info.env_pos.x, info.env_pos.y, info.env_pos.z)
