@@ -39,10 +39,12 @@ end
 local function SyncLight(vehicle, ELSvehicle, anyOn, isStatic, kind, id, on)
     local isOn, set
     if kind == 'extra' then
-        isOn, set = IsVehicleExtraTurnedOn(vehicle, id) == true, ToggleExtra
+        isOn, set = IsVehicleExtraTurnedOn(vehicle, id), ToggleExtra
     else
-        isOn, set = IsVehicleMiscTurnedOn(vehicle, id) == true, ToggleMisc
+        isOn, set = IsVehicleMiscTurnedOn(vehicle, id), ToggleMisc
     end
+    -- the native may return true or 1 for "on", depending on the runtime
+    isOn = isOn == true or isOn == 1
     local key = kind .. id
 
     if isStatic then
