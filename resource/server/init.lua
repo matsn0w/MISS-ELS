@@ -1,12 +1,6 @@
 kjxmlData = {}
 local systemOS = nil
 
-local function parseObjSet(data, fileName)
-    local xml = SLAXML:dom(data)
-
-    if xml and xml.root and xml.root.name == 'vcfroot' then ParseVCF(xml, fileName) end
-end
-
 local function checkForUpdate()
     local versionFile = LoadResourceFile(GetCurrentResourceName(), 'version.json')
 
@@ -160,12 +154,18 @@ AddEventHandler('onResourceStart', function(name)
         if not ok then data = nil end
 
         if data then
-            if pcall(function() parseObjSet(data, file) end) then
-                -- no errors
+            local vcf, problems = Vcf.parse(data)
+
+            for _, problem in ipairs(problems) do
+                print('^3[MISS-ELS] ' .. file .. ': ' .. problem .. '^7')
+            end
+
+            if vcf then
+                -- the model name is the file name without .xml
+                kjxmlData[file:sub(1, -5)] = vcf
                 print('Parsed VCF for: ' .. file)
             else
-                -- VCF is faulty, notify the user and continue
-                print('VCF file ' .. file .. ' could not be parsed: is your XML valid?')
+                print('^1[MISS-ELS] VCF file ' .. file .. ' could not be parsed and is skipped^7')
             end
         else
             print('VCF file ' .. file .. ' not found: does the file exist?')
