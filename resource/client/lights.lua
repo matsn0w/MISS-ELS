@@ -36,42 +36,6 @@ local function SetLightStage(vehicle, stage, toggle)
         SetVehicleSiren(vehicle, toggle)
     end
 
-    if (patternData.flashHighBeam) then
-        Citizen.CreateThread(function()
-            -- get the current vehicle lights state
-            local _, lightsOn, highbeamsOn = GetVehicleLightsState(vehicle)
-
-            -- turn the lights on to avoid flashing tail lights
-            if lightsOn == 0 then SetVehicleLights(vehicle, 2) end
-
-            -- flash the high beam
-            while ELSvehicle[stage] and DoesEntityExist(vehicle) do
-                if ELSvehicle.highBeamEnabled then
-                    SetVehicleFullbeam(vehicle, true)
-                    SetVehicleLightMultiplier(vehicle, Config.HighBeamIntensity or 5.0)
-
-                    Wait(500)
-
-                    SetVehicleFullbeam(vehicle, false)
-                    SetVehicleLightMultiplier(vehicle, 1.0)
-
-                    Wait(500)
-                end
-
-                Wait(0)
-            end
-
-            -- the vehicle is gone, nothing to reset
-            if not DoesEntityExist(vehicle) then return end
-
-            -- reset initial vehicle state
-            if lightsOn == 0 then SetVehicleLights(vehicle, 0) end
-            if highbeamsOn == 1 then SetVehicleFullbeam(vehicle, true) end
-
-            Wait(0)
-        end)
-    end
-
     if patternData.enableWarningBeep then
         Citizen.CreateThread(function()
             while ELSvehicle[stage] and DoesEntityExist(vehicle) do
@@ -291,6 +255,31 @@ Citizen.CreateThread(function()
                         local on = miscs[misc] == true
                         if IsVehicleMiscTurnedOn(vehicle, misc) ~= on then ToggleMisc(vehicle, misc, on) end
                     end
+                end
+
+                -- flashing high beams, on the same clock as the patterns (#185)
+                -- nil: not flashing (no stage with FlashHighBeam, or turned off in the menu)
+                local highBeam = nil
+                if ELSvehicle.highBeamEnabled then highBeam = Pattern.highBeamOn(data, ELSvehicle, now) end
+
+                if highBeam ~= nil then
+                    if not ELSvehicle.highBeam then
+                        -- remember the lights to restore them later, and keep them on to avoid flashing tail lights
+                        local _, lightsOn, highbeamsOn = GetVehicleLightsState(vehicle)
+                        ELSvehicle.highBeam = { lightsOn = lightsOn, highbeamsOn = highbeamsOn }
+
+                        if lightsOn == 0 then SetVehicleLights(vehicle, 2) end
+                    end
+
+                    SetVehicleFullbeam(vehicle, highBeam)
+                    SetVehicleLightMultiplier(vehicle, highBeam and (Config.HighBeamIntensity or 5.0) or 1.0)
+                elseif ELSvehicle.highBeam then
+                    -- stopped flashing: restore the lights as they were
+                    SetVehicleFullbeam(vehicle, ELSvehicle.highBeam.highbeamsOn == 1)
+                    SetVehicleLightMultiplier(vehicle, 1.0)
+                    if ELSvehicle.highBeam.lightsOn == 0 then SetVehicleLights(vehicle, 0) end
+
+                    ELSvehicle.highBeam = nil
                 end
 
                 for extra, info in pairs(data.extras) do

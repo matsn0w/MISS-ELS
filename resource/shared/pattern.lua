@@ -20,6 +20,18 @@ function Pattern.flashAt(pattern, now)
     end
 end
 
+--- Whether the high beams should be lit at time `now`: an active stage's pattern has FlashHighBeam,
+--- flashing 500ms on, 500ms off on the same synced clock as the patterns
+function Pattern.highBeamOn(vcf, state, now)
+    for _, stage in ipairs(Pattern.STAGES) do
+        if state[stage] and vcf.patterns[Pattern.VCF_PATTERN[stage]].flashHighBeam then
+            return now % 1000 < 500
+        end
+    end
+
+    return nil
+end
+
 --- All extras and miscs that any pattern of a VCF switches
 --- @return table<integer, true> extras, table<integer, true> miscs as { extras = ..., miscs = ... }
 function Pattern.lightsUsed(vcf)

@@ -59,3 +59,14 @@ Test('lightsUsed lists every light any pattern switches', function()
     Eq(keys(used.extras), '1,2,3,4,5,6,7,9', 'extras')
     Eq(keys(used.miscs), table.concat({ ConvertMiscNameToId('a'), ConvertMiscNameToId('b'), ConvertMiscNameToId('j'), ConvertMiscNameToId('k') }, ','), 'miscs')
 end)
+
+Test('highBeamOn flashes only while a stage with FlashHighBeam is active', function()
+    local vcf = Vcf.parse(ReadFile('resource/xmlFiles/Example.xml'))
+
+    -- Example.xml: PRIMARY has FlashHighBeam="true", the others don't
+    Eq(Pattern.highBeamOn(vcf, { primary = true }, 100), true, 'first half second')
+    Eq(Pattern.highBeamOn(vcf, { primary = true }, 600), false, 'second half second')
+    Eq(Pattern.highBeamOn(vcf, { primary = true }, 1100), true, 'next cycle')
+    Eq(Pattern.highBeamOn(vcf, { secondary = true, warning = true }, 100), nil, 'stages without high beams')
+    Eq(Pattern.highBeamOn(vcf, {}, 100), nil, 'nothing on')
+end)
