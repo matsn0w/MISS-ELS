@@ -16,3 +16,48 @@ jobs:
 
       - name: Run tests
         run: lua5.4 tests/run.lua
+
+  # Starts a real FXServer (Linux, latest recommended build) with MISS-ELS and fails on script errors.
+  server:
+    runs-on: ubuntu-latest
+    env:
+      FIVEM_LICENSE_KEY: ${{ secrets.FIVEM_LICENSE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip without a license key (forks)
+        if: env.FIVEM_LICENSE_KEY == ''
+        run: echo "::notice::FIVEM_LICENSE_KEY is not available, skipping the server test"
+
+      - name: Download server and dependencies
+        if: env.FIVEM_LICENSE_KEY != ''
+        run: |
+          url=$(curl -fsSL https://changelogs-live.fivem.net/api/changelog/versions/linux/server | jq -r .recommended_download)
+          mkdir -p fx && curl -fsSL "$url" | tar -xJ -C fx
+          git clone -q --depth 1 https://github.com/citizenfx/cfx-server-data cfx-server-data
+          git clone -q --depth 1 https://github.com/warxander/warmenu data/resources/warmenu
+          cp -r "cfx-server-data/resources/[system]/baseevents" data/resources/baseevents
+          cp -r resource data/resources/MISS-ELS
+          cp resource/config.example.lua data/resources/MISS-ELS/config.lua
+
+      - name: Start server
+        if: env.FIVEM_LICENSE_KEY != ''
+        working-directory: data
+        run: |
+          cat > server.cfg <<EOF
+          endpoint_add_tcp "0.0.0.0:30120"
+          endpoint_add_udp "0.0.0.0:30120"
+          sv_licenseKey "$FIVEM_LICENSE_KEY"
+          sv_hostname "MISS-ELS CI"
+          ensure baseevents
+          ensure warmenu
+          ensure MISS-ELS
+          EOF
+          # keep stdin open so the server console doesn't exit; stop after 45 seconds
+          sleep 60 | timeout 45 bash ../fx/run.sh +set onesync on +exec server.cfg > server.log 2>&1 || true
+          cat server.log
+
+          grep -q "Started resource MISS-ELS" server.log || { echo "::error::MISS-ELS did not start"; exit 1; }
+          grep -q "Parsed VCF for: Example.xml" server.log || { echo "::error::VCFs were not loaded"; exit 1; }
+          if grep -q "SCRIPT ERROR" server.log; then echo "::error::Script errors in the server log"; exit 1; fi
