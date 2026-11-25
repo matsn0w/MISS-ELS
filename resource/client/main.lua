@@ -220,13 +220,6 @@ RegisterCommand('MISS-ELS:toggle-siren-four', function ()
     HandleSiren(4)
 end)
 
--- synced for everyone: other players see the high beams stop too (#174)
-RegisterCommand('MISS-ELS:toggle-highbeams', function ()
-    if not CanControlELS() then return end
-
-    RequestElsState(GetVehiclePedIsUsing(PlayerPedId()), { highBeam = 'toggle' })
-end)
-
 AddEventHandler('onClientResourceStart', function(name)
     if not Config then
         CancelEvent()

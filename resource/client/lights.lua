@@ -272,10 +272,10 @@ Citizen.CreateThread(function()
                             lightsOn = lightsOn == true or lightsOn == 1,
                             highbeamsOn = highbeamsOn == true or highbeamsOn == 1,
                         }
-                    end
 
-                    -- headlights that were off only come on with the flash
-                    if not ELSvehicle.highBeam.lightsOn then SetVehicleLights(vehicle, highBeam and 2 or 1) end
+                        -- keep headlights that were off on for the whole stage, so the tail lights don't flash
+                        if not ELSvehicle.highBeam.lightsOn then SetVehicleLights(vehicle, 2) end
+                    end
 
                     SetVehicleFullbeam(vehicle, highBeam)
                     SetVehicleLightMultiplier(vehicle, highBeam and (Config.HighBeamIntensity or 5.0) or 1.0)
