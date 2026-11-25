@@ -1,8 +1,8 @@
 local function AddHighBeamMenuEntry(vehicle)
-    local checked = kjEnabledVehicles[vehicle].highBeamEnabled
+    local checked = ElsStateOf(vehicle).highBeam ~= false
 
     if WarMenu.CheckBox(Config.Translations.VehicleControlMenu.FlashingHighBeam, checked) then
-        kjEnabledVehicles[vehicle].highBeamEnabled = not checked
+        RequestElsState(vehicle, { highBeam = 'toggle' })
     end
 end
 

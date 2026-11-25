@@ -3,13 +3,19 @@ ElsState = {}
 
 local STAGES = { 'primary', 'secondary', 'warning' }
 
+--- a requested boolean, or the opposite of the current value for 'toggle' (so quick key presses never act on stale state)
+local function wanted(value, current)
+    if value == 'toggle' then return not current end
+    if type(value) == 'boolean' then return value end
+end
+
 function ElsState.default()
-    return { primary = false, secondary = false, warning = false, siren = 0, horn = false }
+    return { primary = false, secondary = false, warning = false, siren = 0, horn = false, highBeam = true }
 end
 
 --- Apply a client's requested changes to the current state. Anything invalid is ignored.
 --- @param current table|nil the vehicle's current state
---- @param changes table requested fields, e.g. { primary = true } or { siren = 2 }
+--- @param changes table requested fields, e.g. { primary = true }, { siren = 2 } or { primary = 'toggle' }
 --- @param vcf table the parsed VCF of the vehicle
 --- @param sirenAlwaysAllowed boolean Config.SirenAlwaysAllowed
 --- @return table state the new state
@@ -23,11 +29,15 @@ function ElsState.apply(current, changes, vcf, sirenAlwaysAllowed)
 
     local stageChanged = false
     for _, stage in ipairs(STAGES) do
-        if type(changes[stage]) == 'boolean' and changes[stage] ~= state[stage] then
-            state[stage] = changes[stage]
+        local value = wanted(changes[stage], state[stage])
+        if value ~= nil and value ~= state[stage] then
+            state[stage] = value
             stageChanged = true
         end
     end
+
+    local highBeam = wanted(changes.highBeam, state.highBeam)
+    if highBeam ~= nil then state.highBeam = highBeam end
 
     if type(changes.horn) == 'boolean' then
         local horn = vcf.sounds.mainHorn

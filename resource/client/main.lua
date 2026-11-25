@@ -43,12 +43,12 @@ if Config.Indicators then
 end
 
 --- The vehicle's synced ELS state (written by the server, see server/state.lua)
-local function ElsStateOf(vehicle)
+function ElsStateOf(vehicle)
     return Entity(vehicle).state.els or {}
 end
 
 --- Ask the server to change the vehicle's ELS state; it validates and syncs it to everyone
-local function RequestElsState(vehicle, changes)
+function RequestElsState(vehicle, changes)
     TriggerServerEvent('MISS-ELS:requestState', VehToNet(vehicle), changes)
 end
 
@@ -82,12 +82,12 @@ end
 local function HandleLightStage(stage)
     local ped = PlayerPedId()
     local vehicle = GetVehiclePedIsUsing(ped)
-    local turnOn = not ElsStateOf(vehicle)[stage]
+    -- the server flips the current value, so quick presses don't act on a state that hasn't synced back yet;
+    -- it also turns the siren off when the last stage goes off
+    RequestElsState(vehicle, { [stage] = 'toggle' })
 
-    -- the server turns the siren off when the last stage goes off
-    RequestElsState(vehicle, { [stage] = turnOn })
-
-    if turnOn then
+    -- only for the sound effect, so a stale value is harmless
+    if not ElsStateOf(vehicle)[stage] then
         if stage == 'primary' and kjxmlData[GetCarHash(vehicle)].sounds.nineMode then
             -- play 999 sound effect
             SendNUIMessage({ transactionType = 'playSound', transactionFile = '999mode', transactionVolume = 1.0 })
@@ -218,6 +218,13 @@ RegisterCommand('MISS-ELS:toggle-siren-four', function ()
     if not CanControlELS() then return end
 
     HandleSiren(4)
+end)
+
+-- synced for everyone: other players see the high beams stop too (#174)
+RegisterCommand('MISS-ELS:toggle-highbeams', function ()
+    if not CanControlELS() then return end
+
+    RequestElsState(GetVehiclePedIsUsing(PlayerPedId()), { highBeam = 'toggle' })
 end)
 
 AddEventHandler('onClientResourceStart', function(name)

@@ -154,6 +154,8 @@ local function ApplyElsState(vehicle, state)
 
     local ELSvehicle = kjEnabledVehicles[vehicle]
 
+    ELSvehicle.highBeamEnabled = state.highBeam ~= false
+
     for _, stage in ipairs({ 'primary', 'secondary', 'warning' }) do
         if (state[stage] == true) ~= ELSvehicle[stage] then SetLightStage(vehicle, stage, state[stage] == true) end
     end
@@ -264,20 +266,24 @@ Citizen.CreateThread(function()
 
                 if highBeam ~= nil then
                     if not ELSvehicle.highBeam then
-                        -- remember the lights to restore them later, and keep them on to avoid flashing tail lights
+                        -- remember the lights to restore them later (booleans, or 0/1 on older runtimes)
                         local _, lightsOn, highbeamsOn = GetVehicleLightsState(vehicle)
-                        ELSvehicle.highBeam = { lightsOn = lightsOn, highbeamsOn = highbeamsOn }
-
-                        if lightsOn == 0 then SetVehicleLights(vehicle, 2) end
+                        ELSvehicle.highBeam = {
+                            lightsOn = lightsOn == true or lightsOn == 1,
+                            highbeamsOn = highbeamsOn == true or highbeamsOn == 1,
+                        }
                     end
+
+                    -- headlights that were off only come on with the flash
+                    if not ELSvehicle.highBeam.lightsOn then SetVehicleLights(vehicle, highBeam and 2 or 1) end
 
                     SetVehicleFullbeam(vehicle, highBeam)
                     SetVehicleLightMultiplier(vehicle, highBeam and (Config.HighBeamIntensity or 5.0) or 1.0)
                 elseif ELSvehicle.highBeam then
                     -- stopped flashing: restore the lights as they were
-                    SetVehicleFullbeam(vehicle, ELSvehicle.highBeam.highbeamsOn == 1)
+                    SetVehicleFullbeam(vehicle, ELSvehicle.highBeam.highbeamsOn)
                     SetVehicleLightMultiplier(vehicle, 1.0)
-                    if ELSvehicle.highBeam.lightsOn == 0 then SetVehicleLights(vehicle, 0) end
+                    if not ELSvehicle.highBeam.lightsOn then SetVehicleLights(vehicle, 0) end
 
                     ELSvehicle.highBeam = nil
                 end

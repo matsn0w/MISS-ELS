@@ -18,3 +18,6 @@ RegisterKeyMapping('MISS-ELS:toggle-siren-one', 'Toggle siren 1', 'KEYBOARD', '1
 RegisterKeyMapping('MISS-ELS:toggle-siren-two', 'Toggle siren 2', 'KEYBOARD', '2')
 RegisterKeyMapping('MISS-ELS:toggle-siren-three', 'Toggle siren 3', 'KEYBOARD', '3')
 RegisterKeyMapping('MISS-ELS:toggle-siren-four', 'Toggle siren 4', 'KEYBOARD', '4')
+
+-- flashing high beams
+RegisterKeyMapping('MISS-ELS:toggle-highbeams', 'Toggle flashing high beams', 'KEYBOARD', 'J')

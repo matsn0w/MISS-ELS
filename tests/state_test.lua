@@ -65,3 +65,25 @@ Test('garbage requests leave the state unchanged', function()
         Eq(after.extra, nil, 'no unknown keys')
     end
 end)
+
+Test('toggle flips the current value, so quick key presses never act on stale state', function()
+    local state = ElsState.apply(nil, { primary = 'toggle' }, vcf, false)
+    Eq(state.primary, true, 'first press')
+
+    -- a second press sent before the client saw the first result still turns it off
+    state = ElsState.apply(state, { primary = 'toggle' }, vcf, false)
+    Eq(state.primary, false, 'second press')
+end)
+
+Test('flashing high beams are on by default and can be toggled', function()
+    local state = ElsState.apply(nil, {}, vcf, false)
+    Eq(state.highBeam, true, 'default')
+
+    state = ElsState.apply(state, { highBeam = 'toggle' }, vcf, false)
+    Eq(state.highBeam, false, 'toggled off')
+
+    state = ElsState.apply(state, { highBeam = true }, vcf, false)
+    Eq(state.highBeam, true, 'set on')
+
+    Eq(ElsState.apply(state, { highBeam = 'off' }, vcf, false).highBeam, true, 'garbage ignored')
+end)
