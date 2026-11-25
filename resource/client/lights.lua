@@ -17,6 +17,22 @@ local function ToggleMisc(vehicle, misc, toggle)
     SetVehicleMod(vehicle, misc, toggle and -1 or 0, false)
 end
 
+--- How loud this player hears a vehicle's warning beep (#173): full volume inside the vehicle,
+--- fading out to Config.WarningBeepRange meters outside it (0 = only inside)
+local function WarningBeepVolume(vehicle)
+    local maxVolume = 0.2
+    local ped = PlayerPedId()
+
+    if GetVehiclePedIsIn(ped, false) == vehicle then return maxVolume end
+
+    local range = Config.WarningBeepRange or 0.0
+    if range <= 0 then return 0 end
+
+    local distance = #(GetEntityCoords(ped) - GetEntityCoords(vehicle))
+
+    return math.max(0, maxVolume * (1 - distance / range))
+end
+
 local function SetLightStage(vehicle, stage, toggle)
     local ELSvehicle = kjEnabledVehicles[vehicle]
     local VCFdata = kjxmlData[GetCarHash(vehicle)]
@@ -36,14 +52,21 @@ local function SetLightStage(vehicle, stage, toggle)
         SetVehicleSiren(vehicle, toggle)
     end
 
-    if patternData.enableWarningBeep then
+    if patternData.enableWarningBeep and toggle then
+        -- a new token stops a loop from an earlier activation, so quick toggles never beep twice
+        local token = {}
+        ELSvehicle['beep_' .. stage] = token
+
         Citizen.CreateThread(function()
-            while ELSvehicle[stage] and DoesEntityExist(vehicle) do
-                -- play warning sound
-                SendNUIMessage({ transactionType = 'playSound', transactionFile = 'WarningBeep', transactionVolume = 0.2 })
+            while ELSvehicle[stage] and ELSvehicle['beep_' .. stage] == token and DoesEntityExist(vehicle) do
+                local volume = WarningBeepVolume(vehicle)
+
+                if volume > 0 then
+                    SendNUIMessage({ transactionType = 'playSound', transactionFile = 'WarningBeep', transactionVolume = volume })
+                end
 
                 -- this should be equal to the length of the audio file
-                Citizen.Wait((Config.WarningBeepDuration or 0) * 1000)
+                Citizen.Wait((Config.WarningBeepDuration or 2.0) * 1000)
             end
         end)
     end

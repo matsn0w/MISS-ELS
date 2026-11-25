@@ -42,6 +42,10 @@ Config.Beeps = false
 -- Only change this if you replace the audio file with your own
 Config.WarningBeepDuration = 2.0
 
+-- Who hears the warning beep: 0.0 = only people in the vehicle,
+-- otherwise people outside hear it too, fading out over this many meters
+Config.WarningBeepRange = 0.0
+
 -- Enables controller support for controlling the primary light stage and the sirens
 -- DPAD_LEFT = toggle primary lights
 -- DPAD_DOWN = toggle siren 1
