@@ -51,3 +51,11 @@ Test('litLights combines all active stages', function()
     extras = Pattern.litLights(vcf, {}, 0)
     Eq(keys(extras), '', 'nothing on')
 end)
+
+Test('lightsUsed lists every light any pattern switches', function()
+    local vcf = Vcf.parse(ReadFile('resource/xmlFiles/Example.xml'))
+    local used = Pattern.lightsUsed(vcf)
+
+    Eq(keys(used.extras), '1,2,3,4,5,6,7,9', 'extras')
+    Eq(keys(used.miscs), table.concat({ ConvertMiscNameToId('a'), ConvertMiscNameToId('b'), ConvertMiscNameToId('j'), ConvertMiscNameToId('k') }, ','), 'miscs')
+end)

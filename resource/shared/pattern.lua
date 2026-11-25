@@ -20,6 +20,21 @@ function Pattern.flashAt(pattern, now)
     end
 end
 
+--- All extras and miscs that any pattern of a VCF switches
+--- @return table<integer, true> extras, table<integer, true> miscs as { extras = ..., miscs = ... }
+function Pattern.lightsUsed(vcf)
+    local used = { extras = {}, miscs = {} }
+
+    for _, pattern in pairs(vcf.patterns) do
+        for _, flash in ipairs(pattern) do
+            for _, extra in ipairs(flash.extras) do used.extras[extra] = true end
+            for _, misc in ipairs(flash.miscs) do used.miscs[misc] = true end
+        end
+    end
+
+    return used
+end
+
 --- Which extras and miscs should be lit for a vehicle's state at time `now`.
 --- Stages run concurrently: a light is on when any active stage turns it on.
 --- @return table<integer, true> extras, table<integer, true> miscs

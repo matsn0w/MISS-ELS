@@ -12,8 +12,9 @@ local function ToggleMisc(vehicle, misc, toggle)
     if not DoesEntityExist(vehicle) then return end
 
     SetVehicleModKit(vehicle, 0)
+    -- mod -1 (the stock part) shows the light, 0 hides it; same as IsVehicleMiscTurnedOn and /misc
     -- TODO: respect custom wheel setting
-    SetVehicleMod(vehicle, misc, toggle, false)
+    SetVehicleMod(vehicle, misc, toggle and -1 or 0, false)
 end
 
 local function SetLightStage(vehicle, stage, toggle)
@@ -82,9 +83,6 @@ local function SetLightStage(vehicle, stage, toggle)
             end
         end)
     end
-
-    -- the reset above turned all lights off; the render loop lights the active patterns again
-    ELSvehicle.litExtras, ELSvehicle.litMiscs = {}, {}
 end
 
 local function StaticsIncludesExtra(model, extra)
@@ -279,26 +277,21 @@ Citizen.CreateThread(function()
                 if ELSvehicle.primary or ELSvehicle.secondary or ELSvehicle.warning then
                     -- keep the engine on whilst the lights are activated
                     SetVehicleEngineOn(vehicle, true, true, false)
-                end
 
-                -- switch only the lights whose state changed since the last frame
-                local extras, miscs = Pattern.litLights(data, ELSvehicle, now)
-                local litExtras, litMiscs = ELSvehicle.litExtras or {}, ELSvehicle.litMiscs or {}
+                    local extras, miscs = Pattern.litLights(data, ELSvehicle, now)
+                    data.patternLights = data.patternLights or Pattern.lightsUsed(data)
 
-                for extra in pairs(litExtras) do
-                    if not extras[extra] then ToggleExtra(vehicle, extra, false) end
+                    -- compare with what is actually on: the owner's synced extras arrive a few frames
+                    -- late on other clients and would otherwise linger (both sides lit at once)
+                    for extra in pairs(data.patternLights.extras) do
+                        local on = extras[extra] == true
+                        if IsVehicleExtraTurnedOn(vehicle, extra) ~= on then ToggleExtra(vehicle, extra, on) end
+                    end
+                    for misc in pairs(data.patternLights.miscs) do
+                        local on = miscs[misc] == true
+                        if IsVehicleMiscTurnedOn(vehicle, misc) ~= on then ToggleMisc(vehicle, misc, on) end
+                    end
                 end
-                for extra in pairs(extras) do
-                    if not litExtras[extra] then ToggleExtra(vehicle, extra, true) end
-                end
-                for misc in pairs(litMiscs) do
-                    if not miscs[misc] then ToggleMisc(vehicle, misc, false) end
-                end
-                for misc in pairs(miscs) do
-                    if not litMiscs[misc] then ToggleMisc(vehicle, misc, true) end
-                end
-
-                ELSvehicle.litExtras, ELSvehicle.litMiscs = extras, miscs
 
                 for extra, info in pairs(data.extras) do
                     if IsVehicleExtraTurnedOn(vehicle, extra) and info.env_light then
