@@ -288,6 +288,9 @@ Citizen.CreateThread(function()
                 end
 
                 -- flashing high beams, on the same clock as the patterns (#185)
+                -- known limit: the game ignores this full beam for the driver's own view while their headlight
+                -- switch is off (tested every SetVehicleLights mode); all other players do see it
+
                 -- nil: not flashing (no stage with FlashHighBeam, or turned off in the menu)
                 local highBeam = nil
                 if ELSvehicle.highBeamEnabled then highBeam = Pattern.highBeamOn(data, ELSvehicle, now) end
