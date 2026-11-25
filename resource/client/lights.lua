@@ -33,6 +33,32 @@ local function WarningBeepVolume(vehicle)
     return math.max(0, maxVolume * (1 - distance / range))
 end
 
+--- Bring one extra or misc that a stage uses in line with what should be lit right now.
+--- Statics belong to the player (vehicle menu): a stage may force them on, and afterwards they
+--- return to how the player left them. Other lights are only managed while a stage is on.
+local function SyncLight(vehicle, ELSvehicle, anyOn, isStatic, kind, id, on)
+    local isOn, set
+    if kind == 'extra' then
+        isOn, set = IsVehicleExtraTurnedOn(vehicle, id) == true, ToggleExtra
+    else
+        isOn, set = IsVehicleMiscTurnedOn(vehicle, id) == true, ToggleMisc
+    end
+    local key = kind .. id
+
+    if isStatic then
+        if on then
+            -- remember the player's setting the first time a stage takes over
+            if ELSvehicle.forced[key] == nil then ELSvehicle.forced[key] = isOn end
+            if not isOn then set(vehicle, id, true) end
+        elseif ELSvehicle.forced[key] ~= nil then
+            if isOn ~= ELSvehicle.forced[key] then set(vehicle, id, ELSvehicle.forced[key]) end
+            ELSvehicle.forced[key] = nil
+        end
+    elseif anyOn and isOn ~= on then
+        set(vehicle, id, on)
+    end
+end
+
 --- @param number integer the light stage (1-10)
 local function SetLightStage(vehicle, number, toggle)
     local ELSvehicle = kjEnabledVehicles[vehicle]
@@ -271,23 +297,25 @@ Citizen.CreateThread(function()
             local data = DoesEntityExist(vehicle) and kjxmlData[GetCarHash(vehicle)]
 
             if data then
-                if Pattern.anyStageOn(ELSvehicle.stages) then
+                local anyOn = Pattern.anyStageOn(ELSvehicle.stages)
+                local extras, miscs = {}, {}
+
+                if anyOn then
                     -- keep the engine on whilst the lights are activated
                     SetVehicleEngineOn(vehicle, true, true, false)
 
-                    local extras, miscs = Pattern.litLights(data, ELSvehicle.stages, now)
-                    data.patternLights = data.patternLights or Pattern.lightsUsed(data)
+                    extras, miscs = Pattern.litLights(data, ELSvehicle.stages, now)
+                end
 
-                    -- compare with what is actually on: the owner's synced extras arrive a few frames
-                    -- late on other clients and would otherwise linger (both sides lit at once)
-                    for extra in pairs(data.patternLights.extras) do
-                        local on = extras[extra] == true
-                        if IsVehicleExtraTurnedOn(vehicle, extra) ~= on then ToggleExtra(vehicle, extra, on) end
-                    end
-                    for misc in pairs(data.patternLights.miscs) do
-                        local on = miscs[misc] == true
-                        if IsVehicleMiscTurnedOn(vehicle, misc) ~= on then ToggleMisc(vehicle, misc, on) end
-                    end
+                data.patternLights = data.patternLights or Pattern.lightsUsed(data)
+
+                -- compare with what is actually on: the owner's synced extras arrive a few frames
+                -- late on other clients and would otherwise linger (both sides lit at once)
+                for extra in pairs(data.patternLights.extras) do
+                    SyncLight(vehicle, ELSvehicle, anyOn, data.statics.extras[extra] ~= nil, 'extra', extra, extras[extra] == true)
+                end
+                for misc in pairs(data.patternLights.miscs) do
+                    SyncLight(vehicle, ELSvehicle, anyOn, data.statics.miscs[misc] ~= nil, 'misc', misc, miscs[misc] == true)
                 end
 
                 -- flashing high beams, on the same clock as the patterns (#185)

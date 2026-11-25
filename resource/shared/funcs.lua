@@ -58,6 +58,7 @@ function AddVehicleToTable(vehicle)
     kjEnabledVehicles[vehicle] = {
         stages = {}, -- light stage number -> on
         beep = {}, -- warning beep loop per stage
+        forced = {}, -- statics a stage turned on -> the player's setting to restore afterwards
         siren = 0,
         sound = nil,
         highBeamEnabled = true,
