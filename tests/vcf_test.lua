@@ -163,3 +163,22 @@ Test('STAGES: invalid numbers, duplicates and mixed formats are reported', funct
         assert(all:find(expected, 1, true), 'missing problem "' .. expected .. '" in:\n' .. all)
     end
 end)
+
+local function same(a, b, path)
+    if type(a) ~= 'table' or type(b) ~= 'table' then
+        if a ~= b then error(path .. ': ' .. tostring(a) .. ' ~= ' .. tostring(b), 0) end
+        return
+    end
+    for k, v in pairs(a) do same(v, b[k], path .. '.' .. tostring(k)) end
+    for k in pairs(b) do if a[k] == nil then error(path .. '.' .. tostring(k) .. ' only in the new file', 0) end end
+end
+
+for _, file in ipairs({ 'Example.xml', 'Example_ServerSideSIrens.xml' }) do
+    Test('backwards compatible: the 2.x ' .. file .. ' and its STAGES version are read identically', function()
+        local legacy, legacyProblems = Vcf.parse(ReadFile('tests/fixtures/legacy/' .. file))
+        local current = Vcf.parse(ReadFile('resource/xmlFiles/' .. file))
+
+        Eq(#legacyProblems, 0, table.concat(legacyProblems, '; '))
+        same(legacy, current, file)
+    end)
+end

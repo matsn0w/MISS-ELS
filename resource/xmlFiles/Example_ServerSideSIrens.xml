@@ -38,29 +38,35 @@
 	</SOUNDS>
 
 	<!-- CUSTOM PATTERN -->
-	<PATTERN>
-		<PRIMARY FlashHighBeam="true"> <!-- This makes your headlights flash -->
-			<Flash Duration="80" Extras="1,2" Miscs="a,b" /> <!-- This is done, then waits 80ms and does... -->
-			<Flash Duration="80" Extras="1,2,3,4" /> <!-- This one. -->
-			<Flash Duration="80" Extras="3,4" /> <!-- e.t.c. -->
-			<Flash Duration="80" Extras="1,2" />
-			<Flash Duration="80" Miscs="a,b" />
-			<Flash Duration="80" />
-			<!-- Then it is looped back up to the first Flash here after 80ms -->
-		</PRIMARY>
+	<STAGES>
+		<Stage Number="1" Name="Primary" FlashHighBeam="true">
+			<Pattern> <!-- This makes your headlights flash -->
+				<Flash Duration="80" Extras="1,2" Miscs="a,b" /> <!-- This is done, then waits 80ms and does... -->
+				<Flash Duration="80" Extras="1,2,3,4" /> <!-- This one. -->
+				<Flash Duration="80" Extras="3,4" /> <!-- e.t.c. -->
+				<Flash Duration="80" Extras="1,2" />
+				<Flash Duration="80" Miscs="a,b" />
+				<Flash Duration="80" />
+				<!-- Then it is looped back up to the first Flash here after 80ms -->
+			</Pattern>
+		</Stage>
 
-		<SECONDARY> <!-- Matrix Board / Beacon / Scene Lights e.t.c. -->
-			<Flash Duration="280" Extras="6" Miscs="k" />
-			<Flash Duration="160" />
-			<Flash Duration="280" Extras="5" Miscs="j" />
-			<Flash Duration="160" />
-		</SECONDARY>
+		<Stage Number="2" Name="Secondary" IsEmergency="false" EnableWarningBeep="true">
+			<Pattern> <!-- This stage won't make AI vehicles pull over -->
+				<Flash Duration="160" Extras="9" />
+				<Flash Duration="160" />
+				<Flash Duration="160" Extras="7" />
+				<Flash Duration="160" />
+			</Pattern>
+		</Stage>
 
-		<REARREDS IsEmergency="false" EnableWarningBeep="true"> <!-- This stage won't make AI vehicles pull over -->
-			<Flash Duration="160" Extras="9" />
-			<Flash Duration="160" />
-			<Flash Duration="160" Extras="7" />
-			<Flash Duration="160" />
-		</REARREDS>
-	</PATTERN>
+		<Stage Number="3" Name="Warning">
+			<Pattern> <!-- Matrix Board / Beacon / Scene Lights e.t.c. -->
+				<Flash Duration="280" Extras="6" Miscs="k" />
+				<Flash Duration="160" />
+				<Flash Duration="280" Extras="5" Miscs="j" />
+				<Flash Duration="160" />
+			</Pattern>
+		</Stage>
+	</STAGES>
 </vcfroot>
