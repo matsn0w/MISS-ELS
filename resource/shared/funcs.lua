@@ -35,14 +35,23 @@ function spairs(t, order)
     end
 end
 
-function GetCarHash(car)
-    if not car then return false end
+-- model hash -> VCF name (or false), so the per-frame loops don't hash every VCF name each time
+local vcfNameByModel = {}
 
-    for k, v in pairs(kjxmlData) do
-        if GetEntityModel(car) == GetHashKey(k) and v.extras ~= nil then return k end
+function GetCarHash(car)
+    if not car or not kjxmlData then return false end
+
+    local model = GetEntityModel(car)
+
+    if vcfNameByModel[model] == nil then
+        vcfNameByModel[model] = false
+
+        for k, v in pairs(kjxmlData) do
+            if model == GetHashKey(k) and v.extras ~= nil then vcfNameByModel[model] = k end
+        end
     end
 
-    return false
+    return vcfNameByModel[model]
 end
 
 function AddVehicleToTable(vehicle)
