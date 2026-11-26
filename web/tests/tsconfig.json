@@ -1,0 +1,16 @@
+{
+  // type-checks the browser tests, their static server and the Playwright config
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM"],
+    "types": ["node"],
+    "strict": true,
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": ["**/*.ts", "**/*.mjs", "../playwright.config.ts"]
+}

@@ -1,6 +1,8 @@
 # MISS-ELS web
 
-Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Built with [Nuxt 4](https://nuxt.com) and [Tailwind CSS 4](https://tailwindcss.com). Requires Node.js 22 or newer.
+
+Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
 
 ## Setup
 
@@ -37,3 +39,21 @@ npm run preview
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+
+## Quality checks
+
+```bash
+# lint (ESLint) and format (Prettier)
+npm run lint
+npm run format
+
+# type-check the app, the tests and the configs
+npm run typecheck
+
+# build the site and run the Playwright browser tests
+npx playwright install chromium
+npm test
+```
+
+The same checks run in CI on every pull request, and again on merges to
+`main` before the site is deployed.
