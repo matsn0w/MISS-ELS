@@ -35,52 +35,54 @@
       </span>
 
       <div class="ml-auto flex items-center gap-2">
-        <label
-          :for="`copy_stage_${stage.id}`"
-          class="text-sm text-gray-500 dark:text-gray-400"
-        >
-          Copy from
-        </label>
-        <div class="w-32">
-          <UiSelect
-            :id="`copy_stage_${stage.id}`"
-            :model-value="''"
-            @update:model-value="copyFrom($event as string)"
+        <template v-if="isAdvanced">
+          <label
+            :for="`copy_stage_${stage.id}`"
+            class="text-sm text-gray-500 dark:text-gray-400"
           >
-            <option value="" disabled>Stage...</option>
-            <option
-              v-for="(other, otherIndex) in stages"
-              v-show="other !== stage"
-              :key="other.id"
-              :value="String(other.id)"
-              :disabled="other === stage"
+            Copy from
+          </label>
+          <div class="w-32">
+            <UiSelect
+              :id="`copy_stage_${stage.id}`"
+              :model-value="''"
+              @update:model-value="copyFrom($event as string)"
             >
-              {{ otherIndex + 1 }}{{ other.name ? ` · ${other.name}` : "" }}
-            </option>
-          </UiSelect>
-        </div>
-        <UiButton
-          size="xs"
-          variant="gray"
-          outlined
-          title="Move up"
-          :disabled="index === 0"
-          @click="useMoveStage(stage, stages[index - 1])"
-        >
-          <ChevronUpIcon class="h-4 w-4" />
-          <span class="sr-only">Move stage {{ index + 1 }} up</span>
-        </UiButton>
-        <UiButton
-          size="xs"
-          variant="gray"
-          outlined
-          title="Move down"
-          :disabled="index === stages.length - 1"
-          @click="useMoveStage(stage, stages[index + 1])"
-        >
-          <ChevronDownIcon class="h-4 w-4" />
-          <span class="sr-only">Move stage {{ index + 1 }} down</span>
-        </UiButton>
+              <option value="" disabled>Stage...</option>
+              <option
+                v-for="(other, otherIndex) in stages"
+                v-show="other !== stage"
+                :key="other.id"
+                :value="String(other.id)"
+                :disabled="other === stage"
+              >
+                {{ otherIndex + 1 }}{{ other.name ? ` · ${other.name}` : "" }}
+              </option>
+            </UiSelect>
+          </div>
+          <UiButton
+            size="xs"
+            variant="gray"
+            outlined
+            title="Move up"
+            :disabled="index === 0"
+            @click="useMoveStage(stage, stages[index - 1])"
+          >
+            <ChevronUpIcon class="h-4 w-4" />
+            <span class="sr-only">Move stage {{ index + 1 }} up</span>
+          </UiButton>
+          <UiButton
+            size="xs"
+            variant="gray"
+            outlined
+            title="Move down"
+            :disabled="index === stages.length - 1"
+            @click="useMoveStage(stage, stages[index + 1])"
+          >
+            <ChevronDownIcon class="h-4 w-4" />
+            <span class="sr-only">Move stage {{ index + 1 }} down</span>
+          </UiButton>
+        </template>
         <UiButton
           size="xs"
           variant="red"
@@ -196,7 +198,7 @@
         :active-flash-id="activeFlashes[pattern.id] ?? null"
       />
 
-      <div class="mt-3 flex flex-wrap items-center gap-3">
+      <div v-if="isAdvanced" class="mt-3 flex flex-wrap items-center gap-3">
         <UiButton outlined @click="useAddPattern(stage)">
           <PlusIcon class="h-4 w-4" />
           Add pattern
@@ -233,6 +235,7 @@ const stages = computed(() => VCF.value.configuration.stages);
 // read the stage from the shared configuration (instead of mutating a prop)
 const stage = computed(() => stages.value[props.index] as Stage);
 const key = computed(() => stageKey(props.index + 1));
+const isAdvanced = useIsAdvanced();
 
 const lights = computed(() => [
   ...enabledLightables("extra"),

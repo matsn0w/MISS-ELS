@@ -14,27 +14,74 @@
         </template>
         cycle {{ cycleDuration }} ms
       </p>
-      <UiButton
-        class="ml-auto"
-        size="xs"
-        variant="red"
-        outlined
-        @click="removePattern"
-      >
-        <XMarkIcon class="h-3 w-3" />
-        Remove pattern
-      </UiButton>
+      <div class="ml-auto flex items-center gap-2">
+        <div v-if="pattern.flashes.length && canUsePresets" class="w-40">
+          <UiSelect
+            :model-value="''"
+            :aria-label="`Replace pattern ${patternIndex + 1} with a preset`"
+            class="text-sm"
+            @update:model-value="applyPreset($event as string)"
+          >
+            <option value="" disabled>Use a preset...</option>
+            <option
+              v-for="preset in patternPresets"
+              :key="preset.id"
+              :value="preset.id"
+            >
+              {{ preset.name }}
+            </option>
+          </UiSelect>
+        </div>
+        <UiButton
+          v-if="isAdvanced || stage.patterns.length > 1"
+          size="xs"
+          variant="red"
+          outlined
+          @click="removePattern"
+        >
+          <XMarkIcon class="h-3 w-3" />
+          Remove pattern
+        </UiButton>
+      </div>
     </header>
 
     <div
       v-if="!pattern.flashes.length"
-      class="mt-2 flex flex-wrap items-center gap-3 rounded-md border-2 border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
+      class="mt-2 rounded-md border-2 border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
     >
-      No flashes yet.
-      <UiButton @click="useAddFlash(pattern)">
-        <PlusIcon class="h-4 w-4" />
-        Add flash
-      </UiButton>
+      <template v-if="canUsePresets">
+        <p>Start from a preset, and fine-tune it afterwards:</p>
+        <div
+          class="mt-2 flex flex-wrap gap-2"
+          role="group"
+          :aria-label="`Presets for pattern ${patternIndex + 1}`"
+        >
+          <UiButton
+            v-for="preset in patternPresets"
+            :key="preset.id"
+            outlined
+            :title="preset.description"
+            @click="applyPreset(preset.id)"
+          >
+            <SparklesIcon class="h-4 w-4" />
+            {{ preset.name }}
+          </UiButton>
+        </div>
+        <p class="mt-3 flex flex-wrap items-center gap-3">
+          Or build it yourself, flash by flash:
+          <UiButton variant="gray" outlined @click="useAddFlash(pattern)">
+            <PlusIcon class="h-4 w-4" />
+            Add flash
+          </UiButton>
+        </p>
+      </template>
+      <p v-else class="flex flex-wrap items-center gap-3">
+        No flashes yet.
+        <UiButton @click="useAddFlash(pattern)">
+          <PlusIcon class="h-4 w-4" />
+          Add flash
+        </UiButton>
+      </p>
     </div>
 
     <div v-else class="relative mt-2 overflow-x-auto pb-2">
@@ -191,6 +238,7 @@ import {
   ChevronLeftIcon,
   DocumentDuplicateIcon,
   PlusIcon,
+  SparklesIcon,
   XMarkIcon,
 } from "@heroicons/vue/24/solid";
 import type { flashType } from "~/types/flash";
@@ -227,6 +275,30 @@ const cycleDuration = computed(() =>
 // a column's width follows its duration, so the timeline reads like time
 const columnWidth = (flash: flashType) =>
   Math.min(320, Math.max(104, (flash.duration || 0) * 0.6));
+
+const isAdvanced = useIsAdvanced();
+
+// presets only use the lights that flash: not the ones on for the whole stage
+const presetLights = computed(() =>
+  props.lights.filter((light) => !hasLight(stage.value, light)),
+);
+const canUsePresets = computed(
+  () => presetLights.value.length >= MIN_PRESET_LIGHTS,
+);
+
+const applyPreset = (presetId: string) => {
+  const preset = patternPresets.find((p) => p.id === presetId);
+  if (!preset) return;
+
+  if (
+    !pattern.value.flashes.length ||
+    window.confirm(
+      `Replace the ${pattern.value.flashes.length} flash(es) of pattern ${props.patternIndex + 1} with the "${preset.name}" preset?`,
+    )
+  ) {
+    useApplyPreset(pattern.value, preset, presetLights.value);
+  }
+};
 
 const removePattern = () => {
   if (

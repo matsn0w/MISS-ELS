@@ -8,6 +8,7 @@ import type { flashType } from "~/types/flash";
 import type { staticType } from "~/types/static";
 import type { Stage, StagePattern } from "~/types/stages";
 import type { Ref } from "vue";
+import type { PatternPreset } from "~/utils/patternPresets";
 const config = useRuntimeConfig();
 
 export const defaultVcfConfig = (): vcfConfig => {
@@ -228,6 +229,18 @@ const copyFlash = (flash: flashType): flashType => ({
 
 export const useAddFlash = (pattern: StagePattern) => {
   pattern.flashes.push({ id: nextId(), duration: 100, extras: [], miscs: [] });
+};
+
+/** Replaces the flashes of a pattern with those of a preset. */
+export const useApplyPreset = (
+  pattern: StagePattern,
+  preset: PatternPreset,
+  lights: Lightable[],
+) => {
+  pattern.flashes = presetFlashes(preset, lights).map((flash) => ({
+    ...flash,
+    id: nextId(),
+  }));
 };
 
 export const useRemoveFlash = (pattern: StagePattern, flash: flashType) => {

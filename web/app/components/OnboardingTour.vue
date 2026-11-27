@@ -152,13 +152,14 @@ const steps: TourStep[] = [
     body: [
       "Import an existing VCF to edit it; files in the old MISS-ELS 2 format are converted to stages for you.",
       "Your work is saved in this browser, so you can continue later. Turn off Save in browser to start fresh on every visit.",
+      "Easy shows only what most vehicles need. Switch to Advanced for every setting, such as sound names, the output format and several patterns per stage.",
     ],
   },
   {
     title: "About this VCF",
     target: "#general",
     body: [
-      "The description also becomes the file name. Output format decides how the file is written: MISS-ELS 3 stages, or the old MISS-ELS 2 format for servers that are not on version 3 yet.",
+      "The description also becomes the file name. In Advanced, Output format decides how the file is written: MISS-ELS 3 stages, or the old MISS-ELS 2 format for servers that are not on version 3 yet.",
     ],
   },
   {
@@ -188,7 +189,7 @@ const steps: TourStep[] = [
     target: "#stages",
     body: [
       "A stage is what a player switches on with one key: stages 1 to 3 are on Q, K and L, and players can bind stages 4 to 10 themselves.",
-      "Each stage has lights that can stay on for the whole stage, and one or more patterns that run at the same time, e.g. one for the front and one for the rear.",
+      "Each stage has lights that can stay on for the whole stage, and a pattern of flashes. In Advanced, a stage can run several patterns at the same time, e.g. one for the front and one for the rear.",
     ],
   },
   {
@@ -196,6 +197,7 @@ const steps: TourStep[] = [
     target: '[data-tour="stage"]',
     illustration: "timeline",
     body: [
+      "Not sure where to begin? Pick a preset, such as Alternate, and fine-tune it afterwards.",
       "In a pattern, every column is a flash: its width follows its duration. Click a cell to switch a light on or off in that flash, and drag a column's header to reorder it.",
       "Press Preview to watch the whole stage, all patterns together.",
     ],
@@ -204,7 +206,7 @@ const steps: TourStep[] = [
     title: "Check and export",
     target: '[data-tour="actions"]',
     body: [
-      "Warnings point out likely mistakes, and Preview XML shows the file as it will be saved. Generate VCF downloads it.",
+      "Warnings point out likely mistakes, and in Advanced, Preview XML shows the file as it will be saved. Generate VCF downloads it.",
       "Put the file in the xmlFiles folder of the resource. That's it, have fun!",
     ],
   },

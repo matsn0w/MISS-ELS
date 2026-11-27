@@ -30,10 +30,21 @@
       </div>
     </header>
 
+    <!-- pinned to the viewport, so nothing added after the app (e.g. the Nuxt
+         DevTools element) can make the page scroll past the backdrop -->
     <main
-      class="h-screen overflow-hidden flex justify-center items-center z-10"
+      class="fixed inset-0 overflow-hidden flex justify-center items-center"
     >
       <slot />
     </main>
   </div>
 </template>
+
+<script setup lang="ts">
+// everything fits on one screen, so the page itself never scrolls; the
+// classes go away again when navigating to a page with another layout
+useHead({
+  htmlAttrs: { class: "overflow-hidden overscroll-none" },
+  bodyAttrs: { class: "overflow-hidden overscroll-none" },
+});
+</script>

@@ -32,10 +32,28 @@ export { expect };
 /**
  * Opens the configurator with a clean browser storage. The onboarding tour
  * is marked as seen unless `tour` is true, so it doesn't cover the page.
+ * The editor starts in `mode`; null leaves it to the configurator's default.
  */
-export const openConfigurator = async (page: Page, { tour = false } = {}) => {
+export const openConfigurator = async (
+  page: Page,
+  {
+    tour = false,
+    mode = "advanced" as "easy" | "advanced" | null,
+  }: { tour?: boolean; mode?: "easy" | "advanced" | null } = {},
+) => {
   if (!tour) {
     await page.addInitScript(() => localStorage.setItem("onboardingDone", "1"));
+  }
+  if (mode) {
+    await page.addInitScript(
+      // only seed it, so a mode picked in the test survives a reload
+      (value) => {
+        if (localStorage.getItem("editorMode") === null) {
+          localStorage.setItem("editorMode", value);
+        }
+      },
+      mode,
+    );
   }
   await page.goto("configurator");
   await expect(

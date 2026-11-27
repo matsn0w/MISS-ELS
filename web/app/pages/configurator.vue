@@ -9,6 +9,30 @@
         class="flex flex-wrap items-center gap-x-6 gap-y-3"
         data-tour="toolbar"
       >
+        <div
+          class="inline-flex rounded-md border border-gray-300 p-0.5 dark:border-gray-600"
+          role="radiogroup"
+          aria-label="Editor mode"
+          data-tour="mode"
+        >
+          <button
+            v-for="option in modeOptions"
+            :key="option.value"
+            type="button"
+            role="radio"
+            :aria-checked="editorMode === option.value"
+            :title="option.title"
+            class="rounded-sm px-3 py-1 text-sm font-medium transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-400"
+            :class="
+              editorMode === option.value
+                ? 'bg-blue-500 text-white'
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            "
+            @click="editorMode = option.value"
+          >
+            {{ option.label }}
+          </button>
+        </div>
         <UiSwitch v-model="isDark">Dark mode</UiSwitch>
         <UiSwitch
           :model-value="saveInBrowser"
@@ -69,7 +93,11 @@
           />
         </UiFormRow>
 
-        <UiFormRow label="Output format" input-id="output-format">
+        <UiFormRow
+          v-if="isAdvanced || outputFormat === 'legacy'"
+          label="Output format"
+          input-id="output-format"
+        >
           <div class="w-full">
             <UiSelect id="output-format" v-model="outputFormat" surface="page">
               <option value="stages">MISS-ELS 3: stages</option>
@@ -107,7 +135,7 @@
           </button>
         </div>
 
-        <UiFormRow label="VCF schema version">
+        <UiFormRow v-if="isAdvanced" label="VCF schema version">
           <p class="text-gray-500 dark:text-gray-300">
             {{ VCF.configuration.version ?? "Unknown" }}
           </p>
@@ -170,7 +198,15 @@
                     v-else
                     class="mt-0.5 h-4 w-4 shrink-0 text-yellow-500"
                   />
-                  {{ issue.message }}
+                  <span class="flex-1">
+                    {{ issue.message }}
+                    <span
+                      v-if="issue.advanced && !isAdvanced"
+                      class="text-gray-500 dark:text-gray-400"
+                    >
+                      Switch to Advanced to change this.
+                    </span>
+                  </span>
                 </button>
               </li>
             </ul>
@@ -229,7 +265,7 @@
                 </span>
                 <span v-else class="max-sm:sr-only">No warnings</span>
               </UiButton>
-              <UiButton outlined @click="showXml = true">
+              <UiButton v-if="isAdvanced" outlined @click="showXml = true">
                 <CodeBracketIcon class="h-4 w-4" />
                 <span class="max-sm:sr-only">Preview XML</span>
               </UiButton>
@@ -274,6 +310,7 @@ import {
   XMarkIcon,
 } from "@heroicons/vue/24/solid";
 import type { VcfIssue } from "~/composables/vcfValidation";
+import type { EditorMode } from "~/composables/editorMode";
 import { compareVersions } from "compare-versions";
 import { resetVcfConfiguration } from "~/composables/vcfConfiguration";
 
@@ -314,6 +351,22 @@ const onResetVcfConfiguration = () => {
     resetVcfConfiguration();
   }
 };
+
+// easy / advanced mode
+const editorMode = useEditorMode();
+const isAdvanced = useIsAdvanced();
+const modeOptions: { value: EditorMode; label: string; title: string }[] = [
+  {
+    value: "easy",
+    label: "Easy",
+    title: "Only the settings most vehicles need",
+  },
+  {
+    value: "advanced",
+    label: "Advanced",
+    title: "Every setting, including sounds, output format and extra patterns",
+  },
+];
 
 // dark mode
 const isDark = ref(localStorage.getItem("theme") === "dark");

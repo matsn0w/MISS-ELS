@@ -6,6 +6,8 @@ export type VcfIssue = {
   message: string;
   /** errors block generating the VCF; warnings do not */
   severity: "error" | "warning";
+  /** the setting to fix is only shown in advanced mode */
+  advanced?: boolean;
 };
 
 const lightNames = (
@@ -38,6 +40,7 @@ export const useVcfValidation = () => {
           section: "general",
           message: `Can't use the MISS-ELS 2 format: ${message}`,
           severity: "error",
+          advanced: true,
         }),
       );
     }
@@ -69,7 +72,12 @@ export const useVcfValidation = () => {
           s.allowUse && s.audioString !== undefined && !s.audioString?.trim(),
       )
       .forEach((s) =>
-        warn("sounds", `${s.name} is enabled but has no audio string.`),
+        issues.push({
+          section: "sounds",
+          message: `${s.name} is enabled but has no audio string.`,
+          severity: "warning",
+          advanced: true,
+        }),
       );
 
     const usable = new Set(

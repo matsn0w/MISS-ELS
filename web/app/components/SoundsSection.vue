@@ -1,6 +1,6 @@
 <template>
   <UiCard title="Sounds">
-    <template #actions>
+    <template v-if="isAdvanced" #actions>
       <UiCheckbox v-model="VCF.configuration.useServerSirens">
         <span class="flex items-center">
           Use&nbsp;
@@ -29,7 +29,9 @@
                 <span class="sr-only">Allow use of {{ option.name }}</span>
               </UiCheckbox>
               <UiCheckbox
-                v-if="option.name === 'MainHorn' && option.allowUse"
+                v-if="
+                  isAdvanced && option.name === 'MainHorn' && option.allowUse
+                "
                 :model-value="!!option.interruptSiren"
                 @update:model-value="option.interruptSiren = $event"
               >
@@ -43,6 +45,7 @@
             </div>
           </UiTd>
           <UiTd
+            v-if="isAdvanced"
             label="Audio string"
             :class="option.audioString === undefined && 'max-md:hidden'"
           >
@@ -52,7 +55,7 @@
             />
           </UiTd>
           <UiTd
-            v-if="VCF.configuration.useServerSirens"
+            v-if="isAdvanced && VCF.configuration.useServerSirens"
             label="Soundset"
             :class="option.soundSet === undefined && 'max-md:hidden'"
           >
@@ -73,11 +76,15 @@ import { defaultVcfConfig } from "~/composables/vcfConfiguration";
 
 const VCF = useVcfConfiguration();
 
+const isAdvanced = useIsAdvanced();
+
 const headers = computed(() => [
   "Option",
   "Allow use",
-  "Audio string",
-  ...(VCF.value.configuration.useServerSirens ? ["Soundset"] : []),
+  ...(isAdvanced.value ? ["Audio string"] : []),
+  ...(isAdvanced.value && VCF.value.configuration.useServerSirens
+    ? ["Soundset"]
+    : []),
 ]);
 
 // NATO alphabet, so more siren options can be added without code changes.
