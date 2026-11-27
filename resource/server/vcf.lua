@@ -55,7 +55,7 @@ function Vcf.parse(xml)
         extras = {},
         miscs = {},
         statics = { extras = {}, miscs = {} },
-        sounds = { nineMode = false },
+        sounds = {},
     }
 
     --- Extras="1,2" and Miscs="a,b" attributes
@@ -150,7 +150,7 @@ function Vcf.parse(xml)
                         soundSet = elem.attr.SoundSet,
                     }
                 elseif elem.name == 'NineMode' then
-                    vcf.sounds.nineMode = elem.attr.AllowUse == 'true'
+                    -- removed in v3 (#175); still accepted so older VCFs load without warnings
                 elseif tone then
                     vcf.sounds['srnTone' .. tone] = {
                         allowUse = elem.attr.AllowUse == 'true',

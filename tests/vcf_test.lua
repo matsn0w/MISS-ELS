@@ -29,7 +29,7 @@ Test('Example.xml is parsed into the shape the client expects', function()
 
     Eq(vcf.sounds.mainHorn.allowUse, false, 'horn AllowUse defaults to false')
     Eq(vcf.sounds.mainHorn.audioString, 'SIRENS_AIRHORN', 'horn audio')
-    Eq(vcf.sounds.nineMode, false, 'nine mode')
+    Eq(vcf.sounds.nineMode, nil, 'nine mode is removed (#175)')
     Eq(vcf.sounds.srnTone1.audioString, 'VEHICLES_HORNS_SIREN_1', 'tone 1')
     Eq(vcf.sounds.srnTone4.allowUse, true, 'tone 4 allowed')
 

@@ -86,14 +86,6 @@ local function HandleLightStage(number)
     -- the server flips the current value, so quick presses don't act on a state that hasn't synced back yet;
     -- it also ignores stages the vehicle doesn't have and turns the siren off when the last stage goes off
     RequestElsState(vehicle, { stages = { [number] = 'toggle' } })
-
-    -- only for the sound effect, so a stale value is harmless
-    if not (ElsStateOf(vehicle).stages or {})[number] then
-        if number == 1 and kjxmlData[GetCarHash(vehicle)].sounds.nineMode then
-            -- play 999 sound effect
-            SendNUIMessage({ transactionType = 'playSound', transactionFile = '999mode', transactionVolume = 1.0 })
-        end
-    end
 end
 
 local function HandleSiren(siren)
