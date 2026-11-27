@@ -22,8 +22,8 @@ MISS ELS is very different compared to most other ELS resources! These are some 
 
 Furthermore...
 
-- Sirens and lights synced across the entire server
-- Support for 3 different light stages
+- Sirens and lights synced across the entire server, every player sees the same flash
+- Up to 10 light stages, each with patterns that run at the same time
 - Support for up to 4 different sirens per vehicle
 - Indicator controls
 - Flashing high beams
@@ -37,6 +37,8 @@ You need to have the following resources installed on your server:
 
 - [FiveM baseevents](https://docs.fivem.net/docs/resources/baseevents) (shipped by default)
 - [WarMenu](https://github.com/warxander/warmenu)
+
+MISS-ELS 3 also requires [OneSync](https://docs.fivem.net/docs/scripting-reference/onesync/), which is on by default for servers started with txAdmin.
 
 ## ⚙️ Installation and Configuration
 

@@ -16,6 +16,8 @@ Please follow these steps to intall the resource into your FiveM server:
 
 ## Upgrading
 
+Upgrading from 2.x to 3.0? Read [what changes](upgrading-to-v3.md) first.
+
 If you currently use an older version of MISS-ELS, you can update it as follows:
 
 1. **⚠️ Make a full backup of your configuration and VCFs!**
