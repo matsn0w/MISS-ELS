@@ -4,7 +4,7 @@ Additionally to extras, MISS-ELS has support for miscs as light sources. This en
 
 ## Resource development
 
-When you ship your misc enabled vehicle, make sure to include the MISS-ELS modkit in a (separate) `carcols.meta` file. Add the kit to your own file or include [this file](examples/carcols.xml) as `carcols.xml`. Read more about streaming these files [here](https://docs.fivem.net/docs/scripting-reference/resource-manifest/resource-manifest/#data_file).
+When you ship your misc enabled vehicle, make sure to include the MISS-ELS modkit in a (separate) `carcols.meta` file. Add the kit to your own file or include [this file](examples/carcols.meta) as `carcols.meta`. Read more about streaming these files [here](https://docs.fivem.net/docs/scripting-reference/resource-manifest/resource-manifest/#data_file).
 
 Then, your vehicle should reference to `miss_els_modkit` in it's `carvariations.meta` entry. See [the example file](examples/carvariations.meta).
 

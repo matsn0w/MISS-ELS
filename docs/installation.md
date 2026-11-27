@@ -2,7 +2,7 @@
 
 # Installation
 
-Please follow these steps to intall the resource into your FiveM server:
+Please follow these steps to install the resource into your FiveM server:
 
 1. Make sure your server meets all [requirements](../README.md#Requirements)
 2. Download the [latest release](https://github.com/matsn0w/MISS-ELS/releases/latest)
@@ -10,8 +10,8 @@ Please follow these steps to intall the resource into your FiveM server:
 4. Extract the contents of the zip archive into that folder
 5. Copy `config.example.lua` to `config.lua`
 6. Edit `config.lua` to fit to your needs, you can leave everything as-is if you are not sure what to change
-7. Place the folder from step 2 and 3 into your resources directory on your server
-8. Enable the resource in your `server.cfg` file: `ensure MISS-ELS` (or whatever you called it in step 2), or start it manually from the console
+7. Place the folder from step 3 into your resources directory on your server
+8. Enable the resource in your `server.cfg` file: `ensure MISS-ELS` (or whatever you called it in step 3), or start it manually from the console
 9. Enjoy! You can now start [creating your VCF files](adding_vcfs.md)
 
 ## Upgrading

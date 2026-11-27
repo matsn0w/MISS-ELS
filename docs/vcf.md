@@ -7,11 +7,11 @@ A VCF consists of 4 main sections:
 - extras and miscs (`EOVERRIDE`)
 - statics (`STATIC`)
 - sounds (`SOUNDS`)
-- patterns (`PATTERN`)
+- light stages (`STAGES`), or the 2.x `PATTERN` section
 
-All these three sections must be present, otherwise the file won't be valid. They live under the main `<vcfroot>` tag. You can use the bare configuration file below to start completely from scratch, or edit one of the configuration examples included in the `xmlFiles` directory.
+All four sections must be present, otherwise the file won't be valid. They live under the main `<vcfroot>` tag. You can use the bare configuration file below to start completely from scratch, or edit one of the configuration examples included in the `xmlFiles` directory.
 
-Alternatively, you can use [this convenient graphical interface](https://matsn0w.github.io/MISS-ELS)!
+Alternatively, you can use [this convenient graphical interface](https://matsn0w.github.io/MISS-ELS)! It still writes the 2.x `PATTERN` format, which MISS-ELS 3 reads just fine.
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -32,12 +32,10 @@ Alternatively, you can use [this convenient graphical interface](https://matsn0w
         <SrnTone4 />
     </SOUNDS>
 
-    <!-- CUSTOM PATTERN -->
-    <PATTERN>
-        <PRIMARY></PRIMARY>
-        <SECONDARY></SECONDARY>
-        <REARREDS></REARREDS>
-    </PATTERN>
+    <!-- LIGHT STAGES -->
+    <STAGES>
+        <Stage Number="1" Name="Primary"></Stage>
+    </STAGES>
 </vcfroot>
 ```
 
@@ -173,7 +171,7 @@ You can optionally set `IsEmergency` to `false` if you don't want vehicles to pu
 
 Also, you can set `FlashHighBeam` to `true` if you want your head lights to flash every .5 seconds. This is disabled by default. You can tweak the flash intensity in `config.lua`. By default, the intensity is set to `5.0`. The game default is `1.0`.
 
-Finally, you can toggle `EnableWarningBeep` to `true` to add a subtile warning beep sound to indicate that, for example, your stop sign is turned on. By default, this is `false`. You can tweak the length of the beep by editing `Config.WarningBeepDuration`. The length of the default sound is 2 seconds. If you replace the audio file, make sure to set the duration to the exact length of the beep (or even longer to add a delay).
+Finally, you can toggle `EnableWarningBeep` to `true` to add a subtile warning beep sound to indicate that, for example, your stop sign is turned on. By default, this is `false`. You can tweak the length of the beep by editing `Config.WarningBeepDuration`. The length of the default sound is 2 seconds. If you replace the audio file, make sure to set the duration to the exact length of the beep (or even longer to add a delay). Only people in the vehicle hear the beep, unless you set `Config.WarningBeepRange`.
 
 Pattern example:
 
