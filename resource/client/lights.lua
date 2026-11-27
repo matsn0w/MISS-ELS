@@ -74,13 +74,6 @@ local function SetLightStage(vehicle, number, toggle)
     -- set the light state
     ELSvehicle.stages[number] = toggle
 
-    -- the native siren ('emergency mode') is on while any emergency stage is on
-    local emergency = false
-    for n, s in ipairs(vcf.stages) do
-        emergency = emergency or (ELSvehicle.stages[n] and s.isEmergency)
-    end
-    SetVehicleSiren(vehicle, emergency)
-
     if stage.enableWarningBeep and toggle then
         -- a new token stops a loop from an earlier activation, so quick toggles never beep twice
         local token = {}
@@ -307,6 +300,15 @@ Citizen.CreateThread(function()
                     SetVehicleEngineOn(vehicle, true, true, false)
 
                     extras, miscs = Pattern.litLights(data, ELSvehicle.stages, now)
+                end
+
+                -- GTA's own 'emergency mode' (AI traffic pulls over) while an emergency stage is on; a short press
+                -- on the horn key switches it off in the game, so it is put back every frame (#30)
+                local emergency = Pattern.emergencyOn(data, ELSvehicle.stages)
+                local sirenOn = IsVehicleSirenOn(vehicle)
+                if (sirenOn == true or sirenOn == 1) ~= emergency then
+                    SetVehicleHasMutedSirens(vehicle, true)
+                    SetVehicleSiren(vehicle, emergency)
                 end
 
                 data.patternLights = data.patternLights or Pattern.lightsUsed(data)

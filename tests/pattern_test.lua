@@ -84,3 +84,12 @@ Test('anyStageOn', function()
     Eq(Pattern.anyStageOn({ false, true }), true, 'one on')
     Eq(Pattern.anyStageOn(nil), false, 'no state')
 end)
+
+Test('emergencyOn: only while a stage with IsEmergency is on (#30)', function()
+    -- Example.xml: stage 1 is an emergency stage, stage 2 has IsEmergency="false"
+    local vcf = Vcf.parse(ReadFile('resource/xmlFiles/Example.xml'))
+
+    Eq(Pattern.emergencyOn(vcf, { true }), true, 'stage 1')
+    Eq(Pattern.emergencyOn(vcf, { false, true }), false, 'stage 2 only')
+    Eq(Pattern.emergencyOn(vcf, {}), false, 'nothing on')
+end)

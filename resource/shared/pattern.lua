@@ -76,6 +76,15 @@ function Pattern.lightsUsed(vcf)
     return used
 end
 
+--- Whether GTA's own 'emergency mode' should be on: any active stage with IsEmergency
+function Pattern.emergencyOn(vcf, stagesOn)
+    for number, stage in ipairs(vcf.stages) do
+        if stagesOn[number] and stage.isEmergency then return true end
+    end
+
+    return false
+end
+
 --- Whether any stage is on
 function Pattern.anyStageOn(stagesOn)
     for _, on in pairs(stagesOn or {}) do
