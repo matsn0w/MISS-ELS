@@ -1,7 +1,7 @@
 Config = {}
 
--- If you are using WM Server Sirens, uncomment below
--- See https://github.com/Walsheyy/WMServerSirens
+-- Audio banks for custom sirens, e.g. WM Server Sirens (uncomment below) or one made with SirenSharp
+-- See https://github.com/Walsheyy/WMServerSirens and https://github.com/BJDubb/SirenSharp
 Config.AudioBanks = {
     -- 'DLC_WMSIRENS\\SIRENPACK_ONE',
 }
