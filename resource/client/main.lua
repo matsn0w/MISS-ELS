@@ -271,7 +271,8 @@ AddEventHandler('onClientResourceStart', function(name)
                 -- handle the horn
                 HandleHorn()
 
-                if not IsUsingKeyboard(0) then
+                -- configs without the option keep the 2.x behaviour (on)
+                if Config.ControllerSupport ~= false and not IsUsingKeyboard(0) then
                     -- on controller
                     if IsDisabledControlJustReleased(1, 85 --[[ DPAD_LEFT ]]) then HandleLightStage(1)
                     elseif IsDisabledControlJustReleased(1, 170 --[[ B ]]) then NextSiren()
