@@ -3,7 +3,7 @@ game 'gta5'
 
 author 'matsn0w'
 description 'Server-Sided Emergency Lighting System for FiveM.'
-version '2.2.1'
+version '3.0.0-rc.1'
 
 dependencies {
     'baseevents',
