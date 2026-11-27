@@ -45,5 +45,10 @@
     "file-saver": "^2.0.5",
     "octokit": "^5.0.5",
     "xml-formatter": "^3.7.1"
+  },
+  "overrides": {
+    "archiver": {
+      "readdir-glob": "^4.0.0"
+    }
   }
 }
