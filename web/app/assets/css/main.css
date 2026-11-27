@@ -1,0 +1,72 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/forms" {
+  strategy: class;
+}
+
+/* dark mode is toggled with a `dark` class on <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    /* native controls (select popups, date pickers, scrollbars) follow the theme */
+    color-scheme: light;
+
+    --scrollbar-thumb: var(--color-gray-300);
+    --scrollbar-thumb-hover: var(--color-gray-400);
+    --scrollbar-track: transparent;
+
+    /* chevron of selects, recolored per theme */
+    --select-chevron: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  }
+
+  :root.dark {
+    color-scheme: dark;
+
+    --scrollbar-thumb: var(--color-gray-600);
+    --scrollbar-thumb-hover: var(--color-gray-500);
+
+    --select-chevron: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  }
+
+  body {
+    @apply bg-gray-100 dark:bg-gray-900;
+  }
+
+  /* Tailwind v4 no longer sets a pointer cursor on buttons */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* scrollbars: thin and themed, for the page and every scroll area */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+
+  /* browsers without scrollbar-color (Safari) use the WebKit pseudo-elements */
+  @supports not (scrollbar-color: auto) {
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      border: 2px solid transparent;
+      border-radius: 9999px;
+      background: var(--scrollbar-thumb) padding-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--scrollbar-thumb-hover) padding-box;
+    }
+
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+  }
+}

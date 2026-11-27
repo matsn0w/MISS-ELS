@@ -1,31 +1,54 @@
 {
   "name": "miss-els-vcf-configurator",
-  "version": "1.1.0",
+  "version": "3.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "nuxt typecheck && tsc -p tests",
+    "test:e2e": "playwright test",
+    "test": "nuxt generate && playwright test"
+  },
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
   },
   "devDependencies": {
-    "@nuxtjs/tailwindcss": "^6.10.0",
-    "@tailwindcss/forms": "^0.5.7",
-    "@types/node": "^18.17.3",
-    "nuxt": "^3.8.2",
-    "nuxt-icon": "^0.6.6",
-    "prettier": "3.1.0",
-    "sass": "^1.69.5"
+    "@iconify-json/ic": "^1.2.4",
+    "@iconify-json/mdi": "^1.2.3",
+    "@iconify-json/uil": "^1.2.3",
+    "@nuxt/eslint": "^1.17.0",
+    "@nuxt/icon": "^2.6.3",
+    "@playwright/test": "^1.65.1",
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/file-saver": "^2.0.7",
+    "@types/node": "^26.6.10",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "nuxt": "^4.7.0",
+    "prettier": "^3.10.1",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^6.0.3",
+    "vue-tsc": "^3.3.14"
   },
   "dependencies": {
-    "@heroicons/vue": "^2.0.18",
-    "@types/luxon": "^3.3.5",
-    "compare-versions": "^6.1.0",
+    "@heroicons/vue": "^2.2.0",
+    "compare-versions": "^6.1.1",
     "file-saver": "^2.0.5",
-    "luxon": "^3.4.4",
-    "octokit": "^3.1.2",
-    "vuedraggable": "^2.24.3",
-    "xml-formatter": "^3.6.0"
+    "octokit": "^5.0.5",
+    "xml-formatter": "^3.7.1"
+  },
+  "overrides": {
+    "archiver": {
+      "readdir-glob": "^4.0.0"
+    }
   }
 }
