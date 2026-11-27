@@ -170,6 +170,13 @@ for number, name in ipairs(STAGE_COMMANDS) do
     end)
 end
 
+-- synced for everyone, like the switch in the vehicle menu (#174)
+RegisterCommand('MISS-ELS:toggle-highbeams', function ()
+    if not CanControlELS() then return end
+
+    RequestElsState(GetVehiclePedIsUsing(PlayerPedId()), { highBeam = 'toggle' })
+end)
+
 RegisterCommand('MISS-ELS:toggle-siren', function ()
     if not CanControlELS() then return end
 
